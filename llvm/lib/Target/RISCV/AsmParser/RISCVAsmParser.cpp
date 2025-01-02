@@ -718,6 +718,7 @@ public:
   bool isUImm7() const { return IsUImm<7>(); }
   bool isUImm8() const { return IsUImm<8>(); }
   bool isUImm11() const { return IsUImm<11>(); }
+  bool isUImm14() const { return IsUImm<14>(); }
   bool isUImm16() const { return IsUImm<16>(); }
   bool isUImm20() const { return IsUImm<20>(); }
   bool isUImm32() const { return IsUImm<32>(); }

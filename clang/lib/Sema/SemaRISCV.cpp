@@ -1303,7 +1303,7 @@ bool SemaRISCV::CheckBuiltinFunctionCall(const TargetInfo &TI,
 
   case RISCV::BI__builtin_riscv_alci:
   case RISCV::BI__builtin_riscv_alci_d:
-    return SemaRef.BuiltinConstantArgRange(TheCall, 1, 4, 16383);
+    return SemaRef.BuiltinConstantArgRange(TheCall, 0, 4, 16383);
 
   case RISCV::BI__builtin_riscv_ntl_load:
   case RISCV::BI__builtin_riscv_ntl_store:

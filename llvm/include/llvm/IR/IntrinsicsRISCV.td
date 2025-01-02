@@ -1889,10 +1889,10 @@ let TargetPrefix = "riscv" in {
   //Zor
   class RiscvZorAlc
       : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+              [IntrNoMem, IntrWillReturn]>;
   class RiscvZorAlci
       : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+              [IntrNoMem, IntrWillReturn]>;
   class RiscvZorReadObject
       : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
               [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;

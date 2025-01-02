@@ -1,27 +1,23 @@
-def uimm16l : RISCVUImmLeafOp<16>;
+// A 14-bit constant greater than 4.
+def uimm14 : RISCVUImmOp<14>, ImmLeaf<XLenVT, [{
+  return Imm < 16384 && Imm > 3;
+}]>;
+
+def OPC_OR : RISCVOpcode<"OR", 0b0001011>;
+
+let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+  class Alc_i<bits<3> funct3, string opcodestr, DAGOperand rty = GPR>
+    : RVInstI<funct3, OPC_OR, (outs rty:$rd), (ins uimm14:$imm14),
+              opcodestr, "$rd, ${imm14}">, Sched<[]> {
+    bits<14> imm14;
+    let imm12 = imm14{13-2};
+    let rs1 = 0b00010;
+  }
+}
 
 let Predicates = [HasStdExtZor, IsRV32] in {
-  def ALCI : Instruction {
-      bits<32> Inst;
-      bits<32> SoftFail = 0;
-      bits<16> imm16;
-      bits<5> rs1 = 0b00010;
-      bits<5> rd;
-      let Namespace = "RISCV";
-      let Size = 4;
-      let hasSideEffects = 1;
-      let mayLoad = 0;
-      let mayStore = 0;
-      let Inst{31-20} = imm16{13-2};
-      let Inst{19-15} = rs1;
-      let Inst{14-12} = 0b010; /*funct3*/
-      let Inst{11-7} = rd;
-      let Inst{6-0} = 0b0001011; /*opcode*/
-      dag OutOperandList = (outs GPR:$rd);
-      dag InOperandList = (ins uimm16l:$imm16);
-      let AsmString = "alci\t$rd, $imm16";
-  }
-  def : Pat<(int_riscv_alci uimm16l:$imm16), (ALCI uimm16l:$imm16)>;
+  def ALCI  : Alc_i<0b010, "alci">;
+  def : Pat<(int_riscv_alci uimm14:$imm14), (ALCI uimm14:$imm14)>;
 
   def ALC : Instruction {
       bits<32> Inst;
@@ -49,7 +45,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
   def ALCI_D : Instruction {
       bits<32> Inst;
       bits<32> SoftFail = 0;
-      bits<16> imm16;
+      bits<12> imm12;
       bits<5> rs1 = 0b00010;
       bits<5> rd;
       let Namespace = "RISCV";
@@ -57,16 +53,16 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let hasSideEffects = 1;
       let mayLoad = 0;
       let mayStore = 0;
-      let Inst{31-20} = imm16{13-2};
+      let Inst{31-20} = imm12;
       let Inst{19-15} = rs1;
       let Inst{14-12} = 0b011; /*funct3*/
       let Inst{11-7} = rd;
       let Inst{6-0} = 0b0001011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
-      dag InOperandList = (ins uimm16l:$imm16);
-      let AsmString = "alci.d\t$rd, $imm16";
+      dag InOperandList = (ins simm12:$imm12);
+      let AsmString = "alci.d\t$rd, $imm12";
   }
-  def : Pat<(int_riscv_alci_d uimm16l:$imm16), (ALCI_D uimm16l:$imm16)>;
+  def : Pat<(int_riscv_alci_d simm12:$imm12), (ALCI_D simm12:$imm12)>;
 
   def ALC_D : Instruction {
       bits<32> Inst;
