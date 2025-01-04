@@ -38,7 +38,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{6-0} = 0b0001011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
       dag InOperandList = (ins GPR:$rs1);
-      let AsmString = "alc\t$rd, $rs1";
+      let AsmString = "alc\t\t$rd, $rs1";
   }
   def : Pat<(int_riscv_alc GPR:$rs1), (ALC GPR:$rs1)>;
 
@@ -106,7 +106,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{6-0} = 0b0001011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
       dag InOperandList = (ins GPR:$rs1);
-      let AsmString = "qsz\t$rd, $rs1";
+      let AsmString = "qsz\t\t$rd, $rs1";
   }
   def : Pat<(int_riscv_qsz GPR:$rs1), (QSZ GPR:$rs1)>;
 
@@ -130,7 +130,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{6-0} = 0b1110011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
       dag InOperandList = (ins GPR:$rs1, GPR:$rs2);
-      let AsmString = "dtp\t$rd, $rs1,$rs2";
+      let AsmString = "dtp\t\t$rd, $rs1,$rs2";
   }
   def : Pat<(int_riscv_dtp GPR:$rs1, GPR:$rs2), (DTP GPR:$rs1, GPR:$rs2)>;
 
@@ -153,7 +153,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{6-0} = 0b1110011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
       dag InOperandList = (ins GPR:$rs1);
-      let AsmString = "btd\t$rd, $rs1";
+      let AsmString = "btd\t\t$rd, $rs1";
   }
   def : Pat<(int_riscv_btd GPR:$rs1), (BTD GPR:$rs1)>;
 
@@ -176,7 +176,7 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{6-0} = 0b1110011; /*opcode*/
       dag OutOperandList = (outs GPR:$rd);
       dag InOperandList = (ins GPR:$rs1);
-      let AsmString = "itd\t$rd, $rs1";
+      let AsmString = "itd\t\t$rd, $rs1";
   }
   def : Pat<(int_riscv_itd GPR:$rs1), (ITD GPR:$rs1)>;
 

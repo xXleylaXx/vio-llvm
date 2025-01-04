@@ -782,6 +782,21 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
   if (RealStackSize == 0 && !MFI.adjustsStack() && RVVStackSize == 0)
     return;
 
+  //For Zor Extension, frame lowering is just allocating a Frame-Oblect
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()){
+    if (RealStackSize > 16376){
+      MF.getFunction().getContext().diagnose(DiagnosticInfoUnsupported{
+          MF.getFunction(), "Frames larger than 16384 Bytes are not allowed with Zor."});
+    }
+    RealStackSize += STI.getXLen() / 8;
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ALCI), SPReg)
+        .addImm(RealStackSize)
+        .setMIFlags(MachineInstr::FrameSetup);
+        
+    std::advance(MBBI, getUnmanagedCSI(MF, CSI).size());
+    return;
+  }
+
   // If the stack pointer has been marked as reserved, then produce an error if
   // the frame requires stack allocation
   if (STI.isRegisterReservedByUser(SPReg))
@@ -937,8 +952,17 @@ void RISCVFrameLowering::deallocateStack(MachineFunction &MF,
   const RISCVRegisterInfo *RI = STI.getRegisterInfo();
   const RISCVInstrInfo *TII = STI.getInstrInfo();
 
-  RI->adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackOffset::getFixed(StackSize),
-                MachineInstr::FrameDestroy, getStackAlign());
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()){
+    bool IsRV64 = STI.is64Bit();
+    BuildMI(MBB, MBBI, DL, TII->get(IsRV64 ? RISCV::LD : RISCV::LW))
+    .addReg(SPReg, RegState::Define)
+    .addReg(SPReg)
+    .addImm(0)
+    .setMIFlag(MachineInstr::FrameDestroy);
+  } else {
+    RI->adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackOffset::getFixed(StackSize),
+                  MachineInstr::FrameDestroy, getStackAlign());
+  }
   StackSize = 0;
 
   unsigned CFIIndex =
@@ -1158,7 +1182,9 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
   if (FI >= MinCSFI && FI <= MaxCSFI) {
     FrameReg = SPReg;
 
-    if (FirstSPAdjustAmount)
+    if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+      Offset = -Offset;
+    else if (FirstSPAdjustAmount)
       Offset += StackOffset::getFixed(FirstSPAdjustAmount);
     else
       Offset += StackOffset::getFixed(getStackSizeWithRVVPadding(MF));
@@ -1279,8 +1305,15 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
              "Can't index across variable sized realign");
       Offset += StackOffset::get(getStackSizeWithRVVPadding(MF),
                                  RVFI->getRVVStackSize());
+                                 
+      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+        Offset = StackOffset::get(getStackSizeWithRVVPadding(MF),
+                                 RVFI->getRVVStackSize()) - Offset;
     } else {
       Offset += StackOffset::getFixed(MFI.getStackSize());
+                                 
+      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+        Offset = StackOffset::getFixed(MFI.getStackSize()) - Offset;
     }
   } else if (MFI.getStackID(FI) == TargetStackID::ScalableVector) {
     // Ensure the base of the RVV stack is correctly aligned: add on the
@@ -1691,6 +1724,13 @@ bool RISCVFrameLowering::assignCalleeSavedSpillSlots(
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
+    
+  //Allocate constant spot for sp if Zor Extension is active
+  const auto &STI = MF.getSubtarget<RISCVSubtarget>();
+  int64_t SlotSize = STI.getXLen() / 8;
+  if (STI.hasStdExtZor()){
+    MFI.CreateFixedSpillStackObject(SlotSize, 0);
+  }
 
   for (auto &CS : CSI) {
     unsigned Reg = CS.getReg();
@@ -1885,6 +1925,7 @@ bool RISCVFrameLowering::restoreCalleeSavedRegisters(
     return true;
 
   MachineFunction *MF = MBB.getParent();
+  RISCVMachineFunctionInfo *RVFI = MF->getInfo<RISCVMachineFunctionInfo>();
   const TargetInstrInfo &TII = *MF->getSubtarget().getInstrInfo();
   DebugLoc DL;
   if (MI != MBB.end() && !MI->isDebugInstr())
@@ -1899,8 +1940,10 @@ bool RISCVFrameLowering::restoreCalleeSavedRegisters(
   const auto &UnmanagedCSI = getUnmanagedCSI(*MF, CSI);
   const auto &RVVCSI = getRVVCalleeSavedInfo(*MF, CSI);
 
+  //TODO: Make it so normal riscv stacks are not loaded backwards!
   auto loadRegFromStackSlot = [&](decltype(UnmanagedCSI) CSInfo) {
-    for (auto &CS : CSInfo) {
+    for (auto it = CSInfo.rbegin(); it != CSInfo.rend(); ++it) {
+      auto CS = *it;
       Register Reg = CS.getReg();
       const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
       TII.loadRegFromStackSlot(MBB, MI, Reg, CS.getFrameIdx(), RC, TRI,
@@ -1909,10 +1952,9 @@ bool RISCVFrameLowering::restoreCalleeSavedRegisters(
              "loadRegFromStackSlot didn't insert any code!");
     }
   };
-  loadRegFromStackSlot(RVVCSI);
   loadRegFromStackSlot(UnmanagedCSI);
+  loadRegFromStackSlot(RVVCSI);
 
-  RISCVMachineFunctionInfo *RVFI = MF->getInfo<RISCVMachineFunctionInfo>();
   if (RVFI->isPushable(*MF)) {
     int RegEnc = RVFI->getRVPushRlist();
     if (RegEnc != llvm::RISCVZC::RLISTENCODE::INVALID_RLIST) {
