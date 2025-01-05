@@ -784,16 +784,14 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
 
   //For Zor Extension, frame lowering is just allocating a Frame-Oblect
   if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()){
-    if (RealStackSize > 16376){
+    RealStackSize = alignTo(MFI.getStackSize() + RVFI->getRVVPadding() + STI.getXLen()/8, getStackAlign());
+    if (RealStackSize > 16383){
       MF.getFunction().getContext().diagnose(DiagnosticInfoUnsupported{
           MF.getFunction(), "Frames larger than 16384 Bytes are not allowed with Zor."});
     }
-    RealStackSize += STI.getXLen() / 8;
     BuildMI(MBB, MBBI, DL, TII->get(RISCV::ALCI), SPReg)
         .addImm(RealStackSize)
         .setMIFlags(MachineInstr::FrameSetup);
-        
-    std::advance(MBBI, getUnmanagedCSI(MF, CSI).size());
     return;
   }
 
