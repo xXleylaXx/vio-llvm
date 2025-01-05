@@ -7867,6 +7867,11 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
     return Load;
   }
 
+  if (Subtarget.hasStdExtZor()){
+    SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
+    return SDValue(DAG.getMachineNode(RISCV::PseudoLA, DL, Ty, Addr), 0);
+  }
+
   switch (getTargetMachine().getCodeModel()) {
   default:
     report_fatal_error("Unsupported code model for lowering");
