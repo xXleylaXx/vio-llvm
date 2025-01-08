@@ -20051,6 +20051,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
   SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
   SDValue Chain = CLI.Chain;
+  //SDValue Chain = SDValue(CLI.Chain.getNode(), CLI.Chain.getResNo());
   SDValue Callee = CLI.Callee;
   bool &IsTailCall = CLI.IsTailCall;
   CallingConv::ID CallConv = CLI.CallConv;
@@ -20116,6 +20117,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
+  int spillSlots = 0;
   for (unsigned i = 0, j = 0, e = ArgLocs.size(), OutIdx = 0; i != e;
        ++i, ++OutIdx) {
     CCValAssign &VA = ArgLocs[i];
@@ -20184,11 +20186,15 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
         if (PartVT.isScalableVector())
           Offset = DAG.getNode(ISD::VSCALE, DL, XLenVT, Offset);
         StoredSize += PartVT.getStoreSize();
+        spillSlots += PartVT.getStoreSize() / Subtarget.getXLen();
         StackAlign = std::max(StackAlign, getPrefTypeAlign(PartVT, DAG));
         Parts.push_back(std::make_pair(PartValue, Offset));
         ++i;
         ++OutIdx;
       }
+      // TODO: Durch eigene Funktion ersetzen
+      // - alci muss Objekt mit richtiger Größe anlegen
+      // - Store-Befehle auf Stack ersetzen durch Store-Befehle in neues Objekt
       SDValue SpillSlot = DAG.CreateStackTemporary(StoredSize, StackAlign);
       int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
       MemOpChains.push_back(
@@ -20275,6 +20281,14 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // The first call operand is the chain and the second is the target address.
   SmallVector<SDValue, 8> Ops;
+
+  if (Subtarget.hasStdExtZor()){
+    SDValue Ty = DAG.getRegister(RISCV::X17, PtrVT);
+    SDValue AlciLength = DAG.getTargetConstant(spillSlots, DL, Subtarget.getXLenVT());
+    SDValue Alci = SDValue(DAG.getTargetNode(RISCVISD::ALCI, DL, Ty, AlciLength), 0);
+    Ops.push_back(Alci);
+  }
+
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 

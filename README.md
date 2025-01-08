@@ -64,4 +64,7 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE="Debug"  \
  -DLLVM_ENABLE_PROJECTS="clang" ../llvm
 
 cmake --build . --target install
+
+cmake -G Ninja -DCMAKE_BUILD_TYPE="MinSizeRel" -DLLVM_USE_SPLIT_DWARF=True -DCMAKE_INSTALL_PREFIX="../install" -DLLVM_OPTIMIZED_TABLEGEN=True -DLLVM_BUILD_TESTS=False  -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" -DLLVM_ENABLE_PROJECTS="clang" ../llvm
+
 ```
