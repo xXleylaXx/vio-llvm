@@ -15,9 +15,15 @@ let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   }
 }
 
+def SDT_RISCVAlci    : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
+                                            SDTCisVT<1, i32>]>;
+
+def riscv_zor_alci : SDNode<"RISCVISD::ALCI", SDT_RISCVAlci>;
+
 let Predicates = [HasStdExtZor, IsRV32] in {
   def ALCI  : Alc_i<0b010, "alci">;
   def : Pat<(int_riscv_alci uimm14:$imm14), (ALCI uimm14:$imm14)>;
+  def : Pat<(riscv_zor_alci uimm14:$imm14), (ALCI uimm14:$imm14)>;
 
   def ALC : Instruction {
       bits<32> Inst;

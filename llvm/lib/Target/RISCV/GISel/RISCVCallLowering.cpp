@@ -593,6 +593,19 @@ bool RISCVCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   const RISCVSubtarget &Subtarget =
       MIRBuilder.getMF().getSubtarget<RISCVSubtarget>();
+
+
+
+  MIRBuilder.getMRI()->addLiveIn(RISCV::X17);
+  MIRBuilder.getMBB().addLiveIn(RISCV::X17);
+  MIRBuilder.buildInstr(RISCV::ALCI)
+      .addReg(RISCV::X17)
+      .addImm(4)
+      .addImm(0);
+
+  MF.getFunction().getContext().diagnose(DiagnosticInfoUnsupported{
+      MF.getFunction(), "TEST!"});
+
   for (auto &AInfo : Info.OrigArgs) {
     if (!isSupportedArgumentType(AInfo.Ty, Subtarget))
       return false;

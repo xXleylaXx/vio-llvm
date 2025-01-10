@@ -20086,6 +20086,10 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
+  SDValue Ty = DAG.getRegister(RISCV::X17, PtrVT);
+  SDValue AlciLength = DAG.getTargetConstant(NumBytes, DL, Subtarget.getXLenVT());
+  Chain = DAG.getNode(RISCVISD::ALCI, DL, PtrVT, AlciLength);
+
   // Create local copies for byval args
   SmallVector<SDValue, 8> ByValArgs;
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
@@ -20115,7 +20119,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Copy argument values to their designated locations.
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-  SDValue StackPtr;
+  SDValue StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
   for (unsigned i = 0, j = 0, e = ArgLocs.size(), OutIdx = 0; i != e;
        ++i, ++OutIdx) {
     CCValAssign &VA = ArgLocs[i];
@@ -20799,6 +20803,7 @@ const char *RISCVTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SF_VC_V_IVW_SE)
   NODE_NAME_CASE(SF_VC_V_VVW_SE)
   NODE_NAME_CASE(SF_VC_V_FVW_SE)
+  NODE_NAME_CASE(ALCI)
   }
   // clang-format on
   return nullptr;
