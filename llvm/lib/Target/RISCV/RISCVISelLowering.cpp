@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGAddressAnalysis.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -19759,8 +19760,17 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain,
   }
   int FI = MFI.CreateFixedObject(ValVT.getStoreSize(), VA.getLocMemOffset(),
                                  /*IsImmutable=*/true);
-  SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
+
   SDValue Val;
+  SDValue FIN;
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()) {
+    SDValue ArgPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
+    FIN = DAG.getNode(ISD::ADD, DL, PtrVT, ArgPtr,
+                  DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
+  } else {
+    FIN = DAG.getFrameIndex(FI, PtrVT);
+  }
+
 
   ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
   switch (VA.getLocInfo()) {
@@ -20086,9 +20096,13 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
-  SDValue Ty = DAG.getRegister(RISCV::X17, PtrVT);
-  SDValue AlciLength = DAG.getTargetConstant(NumBytes, DL, Subtarget.getXLenVT());
-  Chain = DAG.getNode(RISCVISD::ALCI, DL, PtrVT, AlciLength);
+  if (NumBytes > 3 && Subtarget.hasStdExtZor()) {
+    SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
+    SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
+    SDValue Res =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Subtarget.getXLenVT(), ID, AlciLength);
+    Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
+  }
 
   // Create local copies for byval args
   SmallVector<SDValue, 8> ByValArgs;
