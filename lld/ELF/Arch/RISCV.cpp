@@ -321,6 +321,8 @@ RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
   case R_RISCV_SET_ULEB128:
   case R_RISCV_SUB_ULEB128:
     return RE_RISCV_LEB128;
+  case R_RISCV_GOT_OFF:
+    return RE_RISCV_GOT_OFF;
   default:
     Err(ctx) << getErrorLoc(ctx, loc) << "unknown relocation (" << type.v
              << ") against symbol " << &s;
@@ -425,6 +427,14 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     checkInt(ctx, loc, SignExtend64(hi, bits) >> 12, 20, rel);
     write32le(loc, (read32le(loc) & 0xFFF) | (hi & 0xFFFFF000));
     return;
+  }
+  // is this really the correct place for this?
+  case R_RISCV_GOT_OFF: {
+    // get current got index and increment it.
+    uint64_t got_ix = rel.sym->getGotOffset(ctx);
+    uint64_t hi = got_ix + 0x800;
+    checkInt(ctx, loc, SignExtend64(hi, bits) >> 12, 20, rel);
+    write32le(loc, (read32le(loc) & 0xFFF) | (hi & 0xFFFFF000));
   }
 
   case R_RISCV_PCREL_LO12_I:

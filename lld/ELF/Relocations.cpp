@@ -200,7 +200,7 @@ bool lld::elf::needsGot(RelExpr expr) {
   return oneof<R_GOT, RE_AARCH64_AUTH_GOT, RE_AARCH64_AUTH_GOT_PC, R_GOT_OFF,
                RE_MIPS_GOT_LOCAL_PAGE, RE_MIPS_GOT_OFF, RE_MIPS_GOT_OFF32,
                RE_AARCH64_GOT_PAGE_PC, RE_AARCH64_AUTH_GOT_PAGE_PC,
-               RE_AARCH64_AUTH_GOT_PAGE_PC, R_GOT_PC, R_GOTPLT,
+               RE_AARCH64_AUTH_GOT_PAGE_PC, R_GOT_PC, RE_RISCV_GOT_OFF, R_GOTPLT,
                RE_AARCH64_GOT_PAGE, RE_LOONGARCH_GOT, RE_LOONGARCH_GOT_PAGE_PC>(
       expr);
 }
@@ -910,6 +910,8 @@ void elf::addGotEntry(Ctx &ctx, Symbol &sym) {
   else
     addRelativeReloc(ctx, *ctx.in.got, off, sym, 0, R_ABS,
                      ctx.target->symbolicRel);
+
+  
 }
 
 static void addGotAuthEntry(Ctx &ctx, Symbol &sym) {
@@ -981,7 +983,7 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
           RE_AARCH64_GOT_PAGE_PC, RE_AARCH64_AUTH_GOT_PAGE_PC, R_GOT_PC,
           R_GOTONLY_PC, R_GOTPLTONLY_PC, R_PLT_PC, R_PLT_GOTREL, R_PLT_GOTPLT,
           R_GOTPLT_GOTREL, R_GOTPLT_PC, RE_PPC32_PLTREL, RE_PPC64_CALL_PLT,
-          RE_PPC64_RELAX_TOC, RE_RISCV_ADD, RE_AARCH64_GOT_PAGE,
+          RE_PPC64_RELAX_TOC, RE_RISCV_ADD, RE_RISCV_GOT_OFF, RE_AARCH64_GOT_PAGE,
           RE_AARCH64_AUTH_GOT, RE_AARCH64_AUTH_GOT_PC, RE_LOONGARCH_PLT_PAGE_PC,
           RE_LOONGARCH_GOT, RE_LOONGARCH_GOT_PAGE_PC>(e))
     return true;
