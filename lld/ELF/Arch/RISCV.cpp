@@ -432,9 +432,9 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   case R_RISCV_GOT_OFF: {
     // get current got index and increment it.
     uint64_t got_ix = rel.sym->getGotOffset(ctx);
-    uint64_t hi = got_ix + 0x800;
-    checkInt(ctx, loc, SignExtend64(hi, bits) >> 12, 20, rel);
-    write32le(loc, (read32le(loc) & 0xFFF) | (hi & 0xFFFFF000));
+    //Err(ctx) << "got offs: " << got_ix << "\n";
+    write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
+    return;
   }
 
   case R_RISCV_PCREL_LO12_I:
