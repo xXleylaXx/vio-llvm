@@ -7869,8 +7869,12 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
   }
 
   if (Subtarget.hasStdExtZor()){
-    SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-    return SDValue(DAG.getMachineNode(RISCV::PseudoLA, DL, Ty, Addr), 0);
+    SDValue GPReg = DAG.getRegister(RISCV::X3, Subtarget.getXLenVT());
+    SDValue Addr = getTargetNode(N, DL, Ty, DAG, RISCVII::MO_GOT_OFF);
+    SDValue Load =
+        SDValue(DAG.getMachineNode(Subtarget.is64Bit() ? RISCV::LD : RISCV::LW, DL, Ty, GPReg, Addr), 0);
+
+    return Load;
   }
 
   switch (getTargetMachine().getCodeModel()) {
