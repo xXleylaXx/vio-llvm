@@ -428,11 +428,9 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     write32le(loc, (read32le(loc) & 0xFFF) | (hi & 0xFFFFF000));
     return;
   }
-  // is this really the correct place for this?
+  
   case R_RISCV_GOT_OFF: {
-    // get current got index and increment it.
     uint64_t got_ix = rel.sym->getGotOffset(ctx);
-    //Err(ctx) << "got offs: " << got_ix << "\n";
     write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
     return;
   }
