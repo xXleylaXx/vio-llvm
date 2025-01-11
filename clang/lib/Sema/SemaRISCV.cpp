@@ -1300,6 +1300,11 @@ bool SemaRISCV::CheckBuiltinFunctionCall(const TargetInfo &TI,
   case RISCVVector::BI__builtin_rvv_vfwnmsac_vv_rm_mu:
   case RISCVVector::BI__builtin_rvv_vfwnmsac_vf_rm_mu:
     return SemaRef.BuiltinConstantArgRange(TheCall, 4, 0, 4);
+
+  case RISCV::BI__builtin_riscv_alci:
+  case RISCV::BI__builtin_riscv_alci_d:
+    return SemaRef.BuiltinConstantArgRange(TheCall, 0, 4, 16383);
+
   case RISCV::BI__builtin_riscv_ntl_load:
   case RISCV::BI__builtin_riscv_ntl_store:
     DeclRefExpr *DRE =

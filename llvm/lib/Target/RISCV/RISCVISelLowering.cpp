@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGAddressAnalysis.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -7864,6 +7865,15 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
             MachineMemOperand::MOInvariant,
         LLT(Ty.getSimpleVT()), Align(Ty.getFixedSizeInBits() / 8));
     DAG.setNodeMemRefs(cast<MachineSDNode>(Load.getNode()), {MemOp});
+    return Load;
+  }
+
+  if (Subtarget.hasStdExtZor()){
+    SDValue GPReg = DAG.getRegister(RISCV::X3, Subtarget.getXLenVT());
+    SDValue Addr = getTargetNode(N, DL, Ty, DAG, RISCVII::MO_GOT_OFF);
+    SDValue Load =
+        SDValue(DAG.getMachineNode(Subtarget.is64Bit() ? RISCV::LD : RISCV::LW, DL, Ty, GPReg, Addr), 0);
+
     return Load;
   }
 
@@ -19754,8 +19764,17 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain,
   }
   int FI = MFI.CreateFixedObject(ValVT.getStoreSize(), VA.getLocMemOffset(),
                                  /*IsImmutable=*/true);
-  SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
+
   SDValue Val;
+  SDValue FIN;
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()) {
+    SDValue ArgPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
+    FIN = DAG.getNode(ISD::ADD, DL, PtrVT, ArgPtr,
+                  DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
+  } else {
+    FIN = DAG.getFrameIndex(FI, PtrVT);
+  }
+
 
   ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
   switch (VA.getLocInfo()) {
@@ -20081,6 +20100,14 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
+  if (NumBytes > 3 && Subtarget.hasStdExtZor()) {
+    SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
+    SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
+    SDValue Res =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Subtarget.getXLenVT(), ID, AlciLength);
+    Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
+  }
+
   // Create local copies for byval args
   SmallVector<SDValue, 8> ByValArgs;
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
@@ -20110,7 +20137,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Copy argument values to their designated locations.
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-  SDValue StackPtr;
+  SDValue StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
   for (unsigned i = 0, j = 0, e = ArgLocs.size(), OutIdx = 0; i != e;
        ++i, ++OutIdx) {
     CCValAssign &VA = ArgLocs[i];
@@ -20794,6 +20821,7 @@ const char *RISCVTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SF_VC_V_IVW_SE)
   NODE_NAME_CASE(SF_VC_V_VVW_SE)
   NODE_NAME_CASE(SF_VC_V_FVW_SE)
+  NODE_NAME_CASE(ALCI)
   }
   // clang-format on
   return nullptr;

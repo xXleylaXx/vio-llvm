@@ -915,11 +915,11 @@ def PseudoSD  : PseudoStore<"sd">;
 } // Predicates = [IsRV64]
 
 def : InstAlias<"nop",           (ADDI      X0,      X0,           0), 3>;
-def : InstAlias<"li $rd, $imm",  (ADDI GPR:$rd,      X0, simm12:$imm), 2>;
-def : InstAlias<"mv $rd, $rs",   (ADDI GPR:$rd, GPR:$rs,           0)>;
+def : InstAlias<"li \t$rd, $imm",  (ADDI GPR:$rd,      X0, simm12:$imm), 2>;
+def : InstAlias<"mv \t$rd, $rs",   (ADDI GPR:$rd, GPR:$rs,           0)>;
 
-def : InstAlias<"not $rd, $rs",  (XORI GPR:$rd, GPR:$rs,      -1)>;
-def : InstAlias<"neg $rd, $rs",  (SUB  GPR:$rd,      X0, GPR:$rs)>;
+def : InstAlias<"not \t$rd, $rs",  (XORI GPR:$rd, GPR:$rs,      -1)>;
+def : InstAlias<"neg \t$rd, $rs",  (SUB  GPR:$rd,      X0, GPR:$rs)>;
 
 let Predicates = [IsRV64] in {
 def : InstAlias<"negw $rd, $rs",   (SUBW  GPR:$rd,      X0, GPR:$rs)>;
@@ -933,7 +933,7 @@ def : InstAlias<"sgtz $rd, $rs", (SLT   GPR:$rd,      X0, GPR:$rs)>;
 
 // sgt/sgtu are recognised by the GNU assembler but the canonical slt/sltu
 // form will always be printed. Therefore, set a zero weight.
-def : InstAlias<"sgt $rd, $rs, $rt", (SLT GPR:$rd, GPR:$rt, GPR:$rs), 0>;
+def : InstAlias<"sgt \t$rd, $rs, $rt", (SLT GPR:$rd, GPR:$rt, GPR:$rs), 0>;
 def : InstAlias<"sgtu $rd, $rs, $rt", (SLTU GPR:$rd, GPR:$rt, GPR:$rs), 0>;
 
 def : InstAlias<"beqz $rs, $offset",
@@ -953,32 +953,32 @@ def : InstAlias<"bgtz $rs, $offset",
 // The GNU tools emit the canonical mnemonic for the branch pseudo instructions
 // as well (e.g. "bgt" will be recognised by the assembler but never printed by
 // objdump). Match this behaviour by setting a zero weight.
-def : InstAlias<"bgt $rs, $rt, $offset",
+def : InstAlias<"bgt \t$rs, $rt, $offset",
                 (BLT  GPR:$rt, GPR:$rs, simm13_lsb0:$offset), 0>;
-def : InstAlias<"ble $rs, $rt, $offset",
+def : InstAlias<"ble \t$rs, $rt, $offset",
                 (BGE  GPR:$rt, GPR:$rs, simm13_lsb0:$offset), 0>;
 def : InstAlias<"bgtu $rs, $rt, $offset",
                 (BLTU GPR:$rt, GPR:$rs, simm13_lsb0:$offset), 0>;
 def : InstAlias<"bleu $rs, $rt, $offset",
                 (BGEU GPR:$rt, GPR:$rs, simm13_lsb0:$offset), 0>;
 
-def : InstAlias<"j $offset",   (JAL X0, simm21_lsb0_jal:$offset)>;
-def : InstAlias<"jal $offset", (JAL X1, simm21_lsb0_jal:$offset)>;
+def : InstAlias<"j \t$offset",   (JAL X0, simm21_lsb0_jal:$offset)>;
+def : InstAlias<"jal \t$offset", (JAL X1, simm21_lsb0_jal:$offset)>;
 
 // Non-zero offset aliases of "jalr" are the lowest weight, followed by the
 // two-register form, then the one-register forms and finally "ret".
-def : InstAlias<"jr $rs",                (JALR      X0, GPR:$rs, 0), 3>;
-def : InstAlias<"jr ${offset}(${rs})",   (JALR      X0, GPR:$rs, simm12:$offset)>;
+def : InstAlias<"jr \t$rs",                (JALR      X0, GPR:$rs, 0), 3>;
+def : InstAlias<"jr \t${offset}(${rs})",   (JALR      X0, GPR:$rs, simm12:$offset)>;
 def : InstAlias<"jalr $rs",              (JALR      X1, GPR:$rs, 0), 3>;
 def : InstAlias<"jalr ${offset}(${rs})", (JALR      X1, GPR:$rs, simm12:$offset)>;
 def : InstAlias<"jalr $rd, $rs",         (JALR GPR:$rd, GPR:$rs, 0), 2>;
 def : InstAlias<"ret",                   (JALR      X0,      X1, 0), 4>;
 
 // Non-canonical forms for jump targets also accepted by the assembler.
-def : InstAlias<"jr $rs, $offset",        (JALR      X0, GPR:$rs, simm12:$offset), 0>;
+def : InstAlias<"jr \t$rs, $offset",        (JALR      X0, GPR:$rs, simm12:$offset), 0>;
 def : InstAlias<"jalr $rs, $offset",      (JALR      X1, GPR:$rs, simm12:$offset), 0>;
 def : InstAlias<"jalr $rd, $rs, $offset", (JALR GPR:$rd, GPR:$rs, simm12:$offset), 0>;
-def : InstAlias<"jr (${rs})",             (JALR      X0, GPR:$rs, 0), 0>;
+def : InstAlias<"jr \t(${rs})",             (JALR      X0, GPR:$rs, 0), 0>;
 def : InstAlias<"jalr (${rs})",           (JALR      X1, GPR:$rs, 0), 0>;
 def : InstAlias<"jalr $rd, (${rs})",      (JALR GPR:$rd, GPR:$rs, 0), 0>;
 
@@ -1033,44 +1033,44 @@ let Predicates = [HasStdExtZihintntl] in {
 } // Predicates = [HasStdExtZihintntl]
 
 let EmitPriority = 0 in {
-def : InstAlias<"lb $rd, (${rs1})",
+def : InstAlias<"lb \t$rd, (${rs1})",
                 (LB  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"lh $rd, (${rs1})",
+def : InstAlias<"lh \t$rd, (${rs1})",
                 (LH  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"lw $rd, (${rs1})",
+def : InstAlias<"lw \t$rd, (${rs1})",
                 (LW  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"lbu $rd, (${rs1})",
+def : InstAlias<"lbu \t$rd, (${rs1})",
                 (LBU  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"lhu $rd, (${rs1})",
+def : InstAlias<"lhu \t$rd, (${rs1})",
                 (LHU  GPR:$rd, GPR:$rs1, 0)>;
 
-def : InstAlias<"sb $rs2, (${rs1})",
+def : InstAlias<"sb \t$rs2, (${rs1})",
                 (SB  GPR:$rs2, GPR:$rs1, 0)>;
-def : InstAlias<"sh $rs2, (${rs1})",
+def : InstAlias<"sh \t$rs2, (${rs1})",
                 (SH  GPR:$rs2, GPR:$rs1, 0)>;
-def : InstAlias<"sw $rs2, (${rs1})",
+def : InstAlias<"sw \t$rs2, (${rs1})",
                 (SW  GPR:$rs2, GPR:$rs1, 0)>;
 
-def : InstAlias<"add $rd, $rs1, $imm12",
+def : InstAlias<"add \t$rd, $rs1, $imm12",
                 (ADDI  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
-def : InstAlias<"and $rd, $rs1, $imm12",
+def : InstAlias<"and \t$rd, $rs1, $imm12",
                 (ANDI  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
-def : InstAlias<"xor $rd, $rs1, $imm12",
+def : InstAlias<"xor \t$rd, $rs1, $imm12",
                 (XORI  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
-def : InstAlias<"or $rd, $rs1, $imm12",
+def : InstAlias<"or \t$rd, $rs1, $imm12",
                 (ORI  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
-def : InstAlias<"sll $rd, $rs1, $shamt",
+def : InstAlias<"sll \t$rd, $rs1, $shamt",
                 (SLLI  GPR:$rd, GPR:$rs1, uimmlog2xlen:$shamt)>;
-def : InstAlias<"srl $rd, $rs1, $shamt",
+def : InstAlias<"srl \t$rd, $rs1, $shamt",
                 (SRLI  GPR:$rd, GPR:$rs1, uimmlog2xlen:$shamt)>;
-def : InstAlias<"sra $rd, $rs1, $shamt",
+def : InstAlias<"sra \t$rd, $rs1, $shamt",
                 (SRAI  GPR:$rd, GPR:$rs1, uimmlog2xlen:$shamt)>;
 let Predicates = [IsRV64] in {
-def : InstAlias<"lwu $rd, (${rs1})",
+def : InstAlias<"lwu \t$rd, (${rs1})",
                 (LWU  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"ld $rd, (${rs1})",
+def : InstAlias<"ld \t$rd, (${rs1})",
                 (LD  GPR:$rd, GPR:$rs1, 0)>;
-def : InstAlias<"sd $rs2, (${rs1})",
+def : InstAlias<"sd \t$rs2, (${rs1})",
                 (SD  GPR:$rs2, GPR:$rs1, 0)>;
 
 def : InstAlias<"addw $rd, $rs1, $imm12",
@@ -1082,7 +1082,7 @@ def : InstAlias<"srlw $rd, $rs1, $shamt",
 def : InstAlias<"sraw $rd, $rs1, $shamt",
                 (SRAIW  GPR:$rd, GPR:$rs1, uimm5:$shamt)>;
 } // Predicates = [IsRV64]
-def : InstAlias<"slt $rd, $rs1, $imm12",
+def : InstAlias<"slt \t$rd, $rs1, $imm12",
                 (SLTI  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
 def : InstAlias<"sltu $rd, $rs1, $imm12",
                 (SLTIU  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
@@ -2107,6 +2107,12 @@ include "RISCVInstrInfoZimop.td"
 include "RISCVInstrInfoZicbo.td"
 include "RISCVInstrInfoZicond.td"
 include "RISCVInstrInfoZicfiss.td"
+
+//===----------------------------------------------------------------------===//
+// Objective extensions
+//===----------------------------------------------------------------------===//
+
+include "RISCVInstrInfoZor.td"
 
 //===----------------------------------------------------------------------===//
 // Vendor extensions

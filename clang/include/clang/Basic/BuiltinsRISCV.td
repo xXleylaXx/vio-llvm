@@ -137,6 +137,23 @@ def sm3p0 : RISCVBuiltin<"unsigned int(unsigned int)">;
 def sm3p1 : RISCVBuiltin<"unsigned int(unsigned int)">;
 } // Features = "zksh"
 
+//===----------------------------------------------------------------------===//
+// Zor extension.
+//===----------------------------------------------------------------------===//
+let Features = "zor,32bit" in {
+def alci   : RISCVBuiltin<"unsigned int*(unsigned int)">;
+def alc    : RISCVBuiltin<"unsigned int*(unsigned int)">;
+def alci_d : RISCVBuiltin<"unsigned int*(unsigned int)">;
+def alc_d  : RISCVBuiltin<"unsigned int*(unsigned int)">;
+def qsz    : RISCVBuiltin<"unsigned int(unsigned int*)">;
+
+def dtp    : RISCVBuiltin<"unsigned int*(unsigned int, unsigned int)">;
+def btd    : RISCVBuiltin<"unsigned int(unsigned int*)">;
+def itd    : RISCVBuiltin<"unsigned int(unsigned int*)">;
+def lw_x   : RISCVBuiltin<"unsigned int(unsigned int*)">;
+def sw_x   : RISCVBuiltin<"void(unsigned int, unsigned int*)">;
+} // Features = "zor,32bit"
+
 } // Attributes = [Const, NoThrow]
 
 //===----------------------------------------------------------------------===//

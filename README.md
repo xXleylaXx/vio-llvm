@@ -42,3 +42,32 @@ chat](https://discord.gg/xS7Z362),
 
 The LLVM project has adopted a [code of conduct](https://llvm.org/docs/CodeOfConduct.html) for
 participants to all modes of communication within the project.
+
+## How ViO was built
+
+```
+cd riscv-llvm
+
+mkdir build
+
+cd build
+
+#replace <path_to_riscv_gnu_toolchain> with gnu toolchain parent dir!!
+cmake -G Ninja -DCMAKE_BUILD_TYPE="Debug"  \ 
+ -DLLVM_USE_SPLIT_DWARF=True \ 
+ -DCMAKE_INSTALL_PREFIX="<path_to_riscv_gnu_toolchain>"   \ 
+ -DLLVM_OPTIMIZED_TABLEGEN=True  \ 
+ -DLLVM_BUILD_TESTS=False \ 
+ -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf"  \ 
+ -DDEFAULT_SYSROOT="<path_to_riscv_gnu_toolchain>/riscv32-unknown-elf"  \ 
+ -DLLVM_TARGETS_TO_BUILD="RISCV"  \ 
+ -DLLVM_ENABLE_PROJECTS="clang" ../llvm
+
+cmake --build . --target install
+
+
+cmake -G Ninja -DCMAKE_BUILD_TYPE="MinSizeRel" -DLLVM_USE_SPLIT_DWARF=True -DCMAKE_INSTALL_PREFIX="../install" -DLLVM_OPTIMIZED_TABLEGEN=True -DLLVM_BUILD_TESTS=False  -DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" -DLLVM_TARGETS_TO_BUILD="RISCV" -DLLVM_ENABLE_PROJECTS="clang" ../llvm
+
+../install/bin/clang-20 -S -target riscv32-unknown-elf -march=rv32i_zbb_zor -O1 -mcmodel=medany -Wno-incompatible-library-redeclaration -fno-addrsig -fomit-frame-pointer test.c
+
+```

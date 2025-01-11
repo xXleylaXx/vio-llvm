@@ -285,6 +285,7 @@ enum {
   MO_TLSDESC_ADD_LO = 15,
   MO_TLSDESC_CALL = 16,
 
+  MO_GOT_OFF = 30,
   // Used to differentiate between target-specific "direct" flags and "bitmask"
   // flags. A machine operand can only have one "direct" flag, but can have
   // multiple "bitmask" flags.
@@ -316,6 +317,7 @@ enum OperandType : unsigned {
   OPERAND_UIMM10_LSB00_NONZERO,
   OPERAND_UIMM11,
   OPERAND_UIMM12,
+  OPERAND_UIMM14,
   OPERAND_UIMM16,
   OPERAND_UIMM20,
   OPERAND_UIMMLOG2XLEN,

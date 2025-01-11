@@ -1878,6 +1878,47 @@ let TargetPrefix = "riscv" in {
   def int_riscv_vsm3me   : RISCVBinaryAAXUnMasked;
 } // TargetPrefix = "riscv"
 
+
+//===----------------------------------------------------------------------===//
+// RISC-ViO
+//
+// These intrinsics will lower directly into the corresponding instructions
+// added by the objective extension, if the extension is present.
+let TargetPrefix = "riscv" in {
+
+  //Zor
+  class RiscvZorAlc
+      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
+              [IntrNoMem, IntrWillReturn]>;
+  class RiscvZorAlci
+      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
+              [IntrNoMem, IntrWillReturn]>;
+  class RiscvZorReadObject
+      : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+  class RiscvZorDTP
+      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty, llvm_i32_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+  class RiscvZorLWX
+      : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
+              [IntrReadMem, IntrWillReturn]>;
+  class RiscvZorSWX
+      : Intrinsic<[], [llvm_i32_ty, llvm_ptr_ty],
+              [IntrWriteMem]>;
+  
+  def int_riscv_alci   : RiscvZorAlci;
+  def int_riscv_alc    : RiscvZorAlc;
+  def int_riscv_alci_d : RiscvZorAlci;
+  def int_riscv_alc_d  : RiscvZorAlc;
+  def int_riscv_qsz    : RiscvZorReadObject;
+  
+  def int_riscv_dtp    : RiscvZorDTP;
+  def int_riscv_btd    : RiscvZorReadObject;
+  def int_riscv_itd    : RiscvZorReadObject;
+  def int_riscv_lw_x   : RiscvZorLWX;
+  def int_riscv_sw_x   : RiscvZorSWX;
+} // TargetPrefix = "riscv"
+
 // Vendor extensions
 //===----------------------------------------------------------------------===//
 include "llvm/IR/IntrinsicsRISCVXTHead.td"

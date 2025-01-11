@@ -504,6 +504,9 @@ uint64_t RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
     case RISCVMCExpr::VK_RISCV_TLSDESC_CALL:
       FixupKind = RISCV::fixup_riscv_tlsdesc_call;
       break;
+    case RISCVMCExpr::VK_RISCV_GOT_OFF:
+      FixupKind = RISCV::fixup_riscv_got_off;
+      break;
     }
   } else if ((Kind == MCExpr::SymbolRef &&
                  cast<MCSymbolRefExpr>(Expr)->getKind() ==

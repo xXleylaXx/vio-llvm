@@ -965,6 +965,14 @@ def FeatureStdExtSvukte
     : RISCVExperimentalExtension<0, 3,
                                  "Address-Independent Latency of User-Mode Faults to Supervisor Addresses">;
 
+// Objective extension
+
+def FeatureStdExtZor
+    : RISCVExtension<1, 0, "Objective Instructions">;
+def HasStdExtZor : Predicate<"Subtarget->hasStdExtZor()">,
+                      AssemblerPredicate<(all_of FeatureStdExtZor),
+                          "'Zor' (Objective Instructions)">;
+
 // Pointer Masking extensions
 
 // A supervisor-level extension that provides pointer masking for the next lower

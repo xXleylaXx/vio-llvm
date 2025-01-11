@@ -77,6 +77,9 @@ enum Fixups {
   fixup_riscv_tlsdesc_load_lo12,
   fixup_riscv_tlsdesc_add_lo12,
   fixup_riscv_tlsdesc_call,
+  
+  // 12-bit fixup corresponding to %got_off(foo) in l[w|d] %got_off(foo)(gp)
+  fixup_riscv_got_off,
 
   // Used as a sentinel, must be the last
   fixup_riscv_invalid,
