@@ -942,6 +942,7 @@ public:
                        VK == RISCVMCExpr::VK_RISCV_LO ||
                        VK == RISCVMCExpr::VK_RISCV_PCREL_LO ||
                        VK == RISCVMCExpr::VK_RISCV_TPREL_LO ||
+                       VK == RISCVMCExpr::VK_RISCV_GOT_OFF ||
                        VK == RISCVMCExpr::VK_RISCV_TLSDESC_LOAD_LO ||
                        VK == RISCVMCExpr::VK_RISCV_TLSDESC_ADD_LO);
   }
