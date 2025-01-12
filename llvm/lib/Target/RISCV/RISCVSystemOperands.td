@@ -464,3 +464,9 @@ def : SysReg<"sctrstatus", 0x14f>;
 def : SysReg<"sctrdepth", 0x15f>;
 def : SysReg<"vsctrctl", 0x24e>;
 def : SysReg<"mctrctl", 0x34e>;
+
+//===-----------------------------------------------
+// Objective RISC CSRs
+//===-----------------------------------------------
+def : SysReg<"malc", 0xbc0>;
+def : SysReg<"msad", 0xbc1>;

@@ -214,7 +214,6 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       bits<32> SoftFail = 0;
       bits<5> rs2;
       bits<5> rs1;
-      bits<5> rd;
       let Namespace = "RISCV";
       let Size = 4;
       let hasSideEffects = 0;
@@ -224,11 +223,11 @@ let Predicates = [HasStdExtZor, IsRV32] in {
       let Inst{24-20} = rs2;
       let Inst{19-15} = rs1;
       let Inst{14-12} = 0b000; /*funct3*/
-      let Inst{11-7} = rd;
+      let Inst{11-7} = 0b00000;
       let Inst{6-0} = 0b1110011; /*opcode*/
-      dag OutOperandList = (outs GPR:$rd);
+      dag OutOperandList = (outs);
       dag InOperandList = (ins GPR:$rs1, GPR:$rs2);
-      let AsmString = "sw.x\t$rd, $rs1,$rs2";
+      let AsmString = "sw.x\t$rs1, $rs2";
   }
   def : Pat<(int_riscv_sw_x GPR:$rs1, GPR:$rs2), (SW_X GPR:$rs1, GPR:$rs2)>;
 
