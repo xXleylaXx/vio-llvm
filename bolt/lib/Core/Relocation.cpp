@@ -557,6 +557,7 @@ static uint64_t extractValueRISCV(uint64_t Type, uint64_t Contents,
     return extractJImmRISCV(Contents);
   case ELF::R_RISCV_CALL:
   case ELF::R_RISCV_CALL_PLT:
+  case ELF::R_RISCV_GOT_OFF:
     return extractUImmRISCV(Contents);
   case ELF::R_RISCV_BRANCH:
     return extractBImmRISCV(Contents);
@@ -631,6 +632,7 @@ static bool isGOTRISCV(uint64_t Type) {
     return false;
   case ELF::R_RISCV_GOT_HI20:
   case ELF::R_RISCV_TLS_GOT_HI20:
+  case ELF::RE_RISCV_GOT_OFF:
     return true;
   }
 }

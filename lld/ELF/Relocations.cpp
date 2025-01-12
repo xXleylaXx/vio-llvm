@@ -983,7 +983,7 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
           RE_AARCH64_GOT_PAGE_PC, RE_AARCH64_AUTH_GOT_PAGE_PC, R_GOT_PC,
           R_GOTONLY_PC, R_GOTPLTONLY_PC, R_PLT_PC, R_PLT_GOTREL, R_PLT_GOTPLT,
           R_GOTPLT_GOTREL, R_GOTPLT_PC, RE_PPC32_PLTREL, RE_PPC64_CALL_PLT,
-          RE_PPC64_RELAX_TOC, RE_RISCV_ADD, RE_RISCV_GOT_OFF, RE_AARCH64_GOT_PAGE,
+          RE_PPC64_RELAX_TOC, RE_RISCV_ADD, RE_AARCH64_GOT_PAGE,
           RE_AARCH64_AUTH_GOT, RE_AARCH64_AUTH_GOT_PC, RE_LOONGARCH_PLT_PAGE_PC,
           RE_LOONGARCH_GOT, RE_LOONGARCH_GOT_PAGE_PC>(e))
     return true;
@@ -1125,8 +1125,7 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
   // -shared matches the spirit of its -z undefs default. -pie has freedom on
   // choices, and we choose dynamic relocations to be consistent with the
   // handling of GOT-generating relocations.
-  if (isStaticLinkTimeConstant(expr, type, sym, offset) ||
-      (!ctx.arg.isPic && sym.isUndefWeak())) {
+  if (isStaticLinkTimeConstant(expr, type, sym, offset) || (!ctx.arg.isPic && sym.isUndefWeak())) {
     sec->addReloc({expr, type, offset, addend, &sym});
     return;
   }
@@ -1171,6 +1170,7 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
         }
         return;
       }
+
       part.relaDyn->addSymbolReloc(rel, *sec, offset, sym, addend, type);
 
       // MIPS ABI turns using of GOT and dynamic relocations inside out.
@@ -1539,7 +1539,7 @@ void RelocationScanner::scanOne(typename Relocs<RelTy>::const_iterator &i) {
             R_TLSDESC_GOTPLT, R_TLSGD_GOTPLT>(expr)) {
     ctx.in.gotPlt->hasGotPltOffRel.store(true, std::memory_order_relaxed);
   } else if (oneof<R_GOTONLY_PC, R_GOTREL, RE_PPC32_PLTREL, RE_PPC64_TOCBASE,
-                   RE_PPC64_RELAX_TOC>(expr)) {
+                   RE_PPC64_RELAX_TOC, RE_RISCV_GOT_OFF>(expr)) {
     ctx.in.got->hasGotOffRel.store(true, std::memory_order_relaxed);
   }
 
