@@ -477,6 +477,9 @@ bool elf::includeInSymtab(Ctx &ctx, const Symbol &b) {
       return s->getSectionPiece(d->value).live;
     return true;
   }
+  if (b.getInOtherObject())
+    return true;
+
   return b.used || !ctx.arg.gcSections;
 }
 
@@ -1841,7 +1844,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         finalizeSynthetic(ctx, part.ehFrame.get());
     }
   }
-
   demoteSymbolsAndComputeIsPreemptible(ctx);
 
   if (ctx.arg.copyRelocs && ctx.arg.discard != DiscardPolicy::None)
@@ -1915,10 +1917,13 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   }
 
   {
+    //auto diag = Err(ctx);
     llvm::TimeTraceScope timeScope("Add symbols to symtabs");
     // Now that we have defined all possible global symbols including linker-
     // synthesized ones. Visit all symbols to give the finishing touches.
     for (Symbol *sym : ctx.symtab->getSymbols()) {
+      //auto diag = Err(ctx);
+      //diag << "finalise: sym : " << sym->getName() << " in other obj:" << sym->getInOtherObject() << "\n";
       if (!sym->isUsedInRegularObj || !includeInSymtab(ctx, *sym))
         continue;
       if (!ctx.arg.relocatable)
@@ -1941,12 +1946,18 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     for (Partition &part :
          MutableArrayRef<Partition>(ctx.partitions).slice(1)) {
       DenseSet<Symbol *> syms;
-      for (const SymbolTableEntry &e : part.dynSymTab->getSymbols())
+      for (const SymbolTableEntry &e : part.dynSymTab->getSymbols()){
+        //diag << "finalise: extsym : " << e.sym->getName() << "\n";
         syms.insert(e.sym);
+      }
+
+
       for (DynamicReloc &reloc : part.relaDyn->relocs)
         if (reloc.sym && reloc.needsDynSymIndex() &&
-            syms.insert(reloc.sym).second)
+            syms.insert(reloc.sym).second){
           part.dynSymTab->addSymbol(reloc.sym);
+           //diag << "finalise: extsym : " << reloc.sym->getName() << "\n";
+          }
     }
   }
 

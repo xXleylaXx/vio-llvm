@@ -896,7 +896,7 @@ void elf::addGotEntry(Ctx &ctx, Symbol &sym) {
   uint64_t off = sym.getGotOffset(ctx);
 
   // If preemptible, emit a GLOB_DAT relocation.
-  if (sym.isPreemptible) {
+  if (sym.isPreemptible && !(sym.getInOtherObject())) {
     ctx.mainPart->relaDyn->addReloc({ctx.target->gotRel, ctx.in.got.get(), off,
                                      DynamicReloc::AgainstSymbol, sym, 0,
                                      R_ABS});
@@ -905,7 +905,7 @@ void elf::addGotEntry(Ctx &ctx, Symbol &sym) {
 
   // Otherwise, the value is either a link-time constant or the load base
   // plus a constant.
-  if (!ctx.arg.isPic || isAbsolute(sym))
+  if ((!ctx.arg.isPic || isAbsolute(sym)) && !(sym.getInOtherObject()))
     ctx.in.got->addConstant({R_ABS, ctx.target->symbolicRel, off, 0, &sym});
   else
     addRelativeReloc(ctx, *ctx.in.got, off, sym, 0, R_ABS,

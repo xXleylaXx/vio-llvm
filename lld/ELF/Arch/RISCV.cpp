@@ -431,6 +431,11 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   
   case R_RISCV_GOT_OFF: {
     uint64_t got_ix = rel.sym->getGotOffset(ctx);
+    //rel.sym->setInOtherObject();
+    //ctx.in.symTab-> {
+    //ctx.in.relaPlt->addPltEntry(ctx, PltSection &plt, GotPltSection &gotPlt, RelocationBaseSection &rel, RelType type, Symbol &sym)
+    //auto diag = Err(ctx);
+    //diag << "got got off" << rel.sym->getName() << " " << rel.sym->kind() << "\n";
     write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
     return;
   }
@@ -967,6 +972,7 @@ void RISCV::finalizeRelax(int passes) const {
         // we are in the middle of a 4-byte NOP, and we need to rewrite the NOP
         // sequence.
         int64_t skip = 0;
+
         if (r.type == R_RISCV_ALIGN) {
           if (remove % 4 || r.addend % 4) {
             skip = r.addend - remove;
@@ -996,7 +1002,7 @@ void RISCV::finalizeRelax(int passes) const {
             break;
           case R_RISCV_32:
             // Used by relaxTlsLe to write a uint32_t then suppress the handling
-            // in relocateAlloc.
+            // in relocateAlloc
             skip = 4;
             write32le(p, aux.writes[writesIdx++]);
             aux.relocTypes[i] = R_RISCV_NONE;

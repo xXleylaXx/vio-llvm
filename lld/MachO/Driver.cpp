@@ -2146,6 +2146,7 @@ bool link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
 
     config->passPlugins = args::getStrings(args, OPT_load_pass_plugins);
 
+    //VIO TODO?
     createSyntheticSections();
     createSyntheticSymbols();
     addSynthenticMethnames();

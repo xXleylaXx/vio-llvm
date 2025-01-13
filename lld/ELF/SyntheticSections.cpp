@@ -1518,7 +1518,7 @@ DynamicSection<ELFT>::computeContents() {
       }
     }
   }
-
+  // VIO TODO
   addInSec(DT_SYMTAB, *part.dynSymTab);
   addInt(DT_SYMENT, sizeof(Elf_Sym));
   addInSec(DT_STRTAB, *part.dynStrTab);
@@ -2295,6 +2295,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *buf) {
   bool relocatable = ctx.arg.relocatable;
   for (SymbolTableEntry &ent : symbols) {
     Symbol *sym = ent.sym;
+
+
     bool isDefinedHere = type == SHT_SYMTAB || sym->partition == partition;
 
     // Set st_name, st_info and st_other.
