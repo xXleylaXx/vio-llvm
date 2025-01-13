@@ -905,8 +905,10 @@ void elf::addGotEntry(Ctx &ctx, Symbol &sym) {
 
   // Otherwise, the value is either a link-time constant or the load base
   // plus a constant.
-  if ((!ctx.arg.isPic || isAbsolute(sym)) && !(sym.getInOtherObject()))
+  if ((!ctx.arg.isPic || isAbsolute(sym)) && !(sym.getInOtherObject())){
+    std::cout << "addgotentry -> addconstant  nm:" << sym.getName().str() << "inothero: " << sym.getInOtherObject() << "\n";
     ctx.in.got->addConstant({R_ABS, ctx.target->symbolicRel, off, 0, &sym});
+  }
   else
     addRelativeReloc(ctx, *ctx.in.got, off, sym, 0, R_ABS,
                      ctx.target->symbolicRel);
@@ -1471,6 +1473,9 @@ void RelocationScanner::scanOne(typename Relocs<RelTy>::const_iterator &i) {
   uint64_t offset = getter.get(ctx, rel.r_offset);
   if (offset == uint64_t(-1))
     return;
+  
+  if(type == R_RISCV_GOT_OFF)
+    sym.setInOtherObject();
 
   RelExpr expr =
       ctx.target->getRelExpr(type, sym, sec->content().data() + offset);

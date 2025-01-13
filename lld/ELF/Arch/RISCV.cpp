@@ -18,6 +18,8 @@
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/TargetParser/RISCVISAInfo.h"
 
+#include <iostream>
+
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::support::endian;
@@ -259,6 +261,8 @@ RelType RISCV::getDynRel(RelType type) const {
 
 RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
                           const uint8_t *loc) const {
+
+  std::cout << "RISCV::getRelExp for " << s.getName().str() << " " << type << " \n";
   switch (type) {
   case R_RISCV_NONE:
     return R_NONE;
@@ -431,11 +435,10 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   
   case R_RISCV_GOT_OFF: {
     uint64_t got_ix = rel.sym->getGotOffset(ctx);
-    //rel.sym->setInOtherObject();
-    //ctx.in.symTab-> {
     //ctx.in.relaPlt->addPltEntry(ctx, PltSection &plt, GotPltSection &gotPlt, RelocationBaseSection &rel, RelType type, Symbol &sym)
     //auto diag = Err(ctx);
     //diag << "got got off" << rel.sym->getName() << " " << rel.sym->kind() << "\n";
+    std::cout << "relocate: " << rel.sym->getName().str() << " typ: " << rel.type << " inothjero " << rel.sym->getInOtherObject() << "\n";
     write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
     return;
   }

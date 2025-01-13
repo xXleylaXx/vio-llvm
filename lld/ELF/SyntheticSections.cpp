@@ -45,6 +45,8 @@
 #include <cinttypes>
 #include <cstdlib>
 
+#include <iostream>
+
 using namespace llvm;
 using namespace llvm::dwarf;
 using namespace llvm::ELF;
@@ -664,7 +666,15 @@ GotSection::GotSection(Ctx &ctx)
   numEntries = ctx.target->gotHeaderEntriesNum;
 }
 
-void GotSection::addConstant(const Relocation &r) { relocations.push_back(r); }
+void GotSection::addConstant(const Relocation &r) { 
+      std::cout << "gotsection::addconstant " << r.sym->getName().str() << " typ: " << r.type << "\n";
+    if(r.sym->getInOtherObject()){
+      std::cout << "in other obj -> non const\n";
+      addEntry(*r.sym);
+    } else {
+      relocations.push_back(r); 
+    }
+    }
 void GotSection::addEntry(const Symbol &sym) {
   assert(sym.auxIdx == ctx.symAux.size() - 1);
   ctx.symAux.back().gotIdx = numEntries++;

@@ -162,7 +162,7 @@ public:
 
   void setInOtherObject(){
     inOtherObject = true;
-    symbolKind = lld::elf::Symbol::UndefinedKind;
+    //symbolKind = lld::elf::Symbol::UndefinedKind;
   }
 
   bool getInOtherObject() const{

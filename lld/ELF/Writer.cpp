@@ -33,6 +33,7 @@
 #include "llvm/Support/xxhash.h"
 #include <climits>
 
+#include <iostream>
 #define DEBUG_TYPE "lld"
 
 using namespace llvm;
@@ -296,7 +297,7 @@ static void demoteSymbolsAndComputeIsPreemptible(Ctx &ctx) {
         sym->versionId = VER_NDX_GLOBAL;
       }
     }
-
+    std::cout << "demoteSymbolsAndComputeIsPreemptible\n";
     sym->isExported = sym->includeInDynsym(ctx);
     if (ctx.arg.hasDynSymTab)
       sym->isPreemptible = sym->isExported && computeIsPreemptible(ctx, *sym);

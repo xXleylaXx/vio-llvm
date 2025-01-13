@@ -1,3 +1,4 @@
+clear
 cmake --build .
 bin/clang -target riscv32-unknown-elf -march=rv32i_zbb_zor -mcmodel=medany -Wno-incompatible-library-redeclaration -fno-addrsig -fomit-frame-pointer -nostdlib  -r test.c -o test.o
 bin/llvm-readelf -a test.o > test.ol

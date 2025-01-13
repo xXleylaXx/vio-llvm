@@ -26,6 +26,8 @@
 #include <optional>
 #include <vector>
 
+#include <iostream>
+
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
@@ -1041,6 +1043,8 @@ void InputSection::relocateNonAlloc(Ctx &ctx, uint8_t *buf,
       addend += target.getImplicitAddend(bufLoc, type);
 
     Symbol &sym = f->getRelocTargetSym(rel);
+    if(type == R_RISCV_GOT_OFF)
+      sym.setInOtherObject();
     RelExpr expr = target.getRelExpr(type, sym, bufLoc);
     if (expr == R_NONE)
       continue;
@@ -1162,6 +1166,8 @@ template <class ELFT>
 void InputSectionBase::relocate(Ctx &ctx, uint8_t *buf, uint8_t *bufEnd) {
   if ((flags & SHF_EXECINSTR) && LLVM_UNLIKELY(getFile<ELFT>()->splitStack))
     adjustSplitStackFunctionPrologues<ELFT>(ctx, buf, bufEnd);
+  
+  std::cout << "InputSectionBase::relocate()\n";
 
   if (flags & SHF_ALLOC) {
     ctx.target->relocateAlloc(*this, buf);
@@ -1171,6 +1177,7 @@ void InputSectionBase::relocate(Ctx &ctx, uint8_t *buf, uint8_t *bufEnd) {
   auto *sec = cast<InputSection>(this);
   // For a relocatable link, also call relocateNonAlloc() to rewrite applicable
   // locations with tombstone values.
+  std::cout << "InputSectionBase::relocatenonallo()\n";
   invokeOnRelocs(*sec, sec->relocateNonAlloc<ELFT>, ctx, buf);
 }
 
