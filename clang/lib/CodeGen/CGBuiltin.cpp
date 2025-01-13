@@ -22978,6 +22978,7 @@ Value *CodeGenFunction::EmitRISCVBuiltinExpr(unsigned BuiltinID,
   unsigned ICEArguments = 0;
   ASTContext::GetBuiltinTypeError Error;
   getContext().GetBuiltinType(BuiltinID, Error, &ICEArguments);
+  
   if (Error == ASTContext::GE_Missing_type) {
     // Vector intrinsics don't have a type string.
     assert(BuiltinID >= clang::RISCV::FirstRVVBuiltin &&
@@ -23234,36 +23235,60 @@ Value *CodeGenFunction::EmitRISCVBuiltinExpr(unsigned BuiltinID,
     ID = Intrinsic::riscv_cv_alu_subuRN;
     break;
 
-  //Zor
+  //Zhm
   case RISCV::BI__builtin_riscv_alci:
     ID = Intrinsic::riscv_alci;
     break;
-  case RISCV::BI__builtin_riscv_alc:
-    ID = Intrinsic::riscv_alc;
+  case RISCV::BI__builtin_riscv_alc_32:
+    ID = Intrinsic::riscv_alc_32;
+    break;
+  case RISCV::BI__builtin_riscv_alc_64:
+    ID = Intrinsic::riscv_alc_64;
     break;
   case RISCV::BI__builtin_riscv_alci_d:
     ID = Intrinsic::riscv_alci_d;
     break;
-  case RISCV::BI__builtin_riscv_alc_d:
-    ID = Intrinsic::riscv_alc_d;
+  case RISCV::BI__builtin_riscv_alc_d_32:
+    ID = Intrinsic::riscv_alc_d_32;
     break;
-  case RISCV::BI__builtin_riscv_qsz:
-    ID = Intrinsic::riscv_qsz;
+  case RISCV::BI__builtin_riscv_alc_d_64:
+    ID = Intrinsic::riscv_alc_d_64;
     break;
-  case RISCV::BI__builtin_riscv_dtp:
-    ID = Intrinsic::riscv_dtp;
+  case RISCV::BI__builtin_riscv_qsz_32:
+    ID = Intrinsic::riscv_qsz_32;
     break;
-  case RISCV::BI__builtin_riscv_btd:
-    ID = Intrinsic::riscv_btd;
+  case RISCV::BI__builtin_riscv_qsz_64:
+    ID = Intrinsic::riscv_qsz_64;
     break;
-  case RISCV::BI__builtin_riscv_itd:
-    ID = Intrinsic::riscv_itd;
+  case RISCV::BI__builtin_riscv_dtp_32:
+    ID = Intrinsic::riscv_dtp_32;
+    break;
+  case RISCV::BI__builtin_riscv_dtp_64:
+    ID = Intrinsic::riscv_dtp_64;
+    break;
+  case RISCV::BI__builtin_riscv_btd_32:
+    ID = Intrinsic::riscv_btd_32;
+    break;
+  case RISCV::BI__builtin_riscv_btd_64:
+    ID = Intrinsic::riscv_btd_64;
+    break;
+  case RISCV::BI__builtin_riscv_itd_32:
+    ID = Intrinsic::riscv_itd_32;
+    break;
+  case RISCV::BI__builtin_riscv_itd_64:
+    ID = Intrinsic::riscv_itd_64;
     break;
   case RISCV::BI__builtin_riscv_lw_x:
     ID = Intrinsic::riscv_lw_x;
     break;
   case RISCV::BI__builtin_riscv_sw_x:
     ID = Intrinsic::riscv_sw_x;
+    break;
+  case RISCV::BI__builtin_riscv_ld_x:
+    ID = Intrinsic::riscv_ld_x;
+    break;
+  case RISCV::BI__builtin_riscv_sd_x:
+    ID = Intrinsic::riscv_sd_x;
     break;
 
     // Vector builtins are handled from here.

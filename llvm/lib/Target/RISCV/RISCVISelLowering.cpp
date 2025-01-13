@@ -7868,7 +7868,7 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
     return Load;
   }
 
-  if (Subtarget.hasStdExtZor()){
+  if (Subtarget.hasStdExtZhm()){
     SDValue GPReg = DAG.getRegister(RISCV::X3, Subtarget.getXLenVT());
     SDValue Addr = getTargetNode(N, DL, Ty, DAG, RISCVII::MO_GOT_OFF);
     SDValue Load =
@@ -19767,7 +19767,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain,
 
   SDValue Val;
   SDValue FIN;
-  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()) {
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()) {
     SDValue ArgPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
     FIN = DAG.getNode(ISD::ADD, DL, PtrVT, ArgPtr,
                   DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
@@ -20100,7 +20100,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
-  if (NumBytes > 3 && Subtarget.hasStdExtZor()) {
+  if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
     SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
     SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
     SDValue Res =

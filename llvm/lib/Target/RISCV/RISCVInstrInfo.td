@@ -2112,7 +2112,7 @@ include "RISCVInstrInfoZicfiss.td"
 // Objective extensions
 //===----------------------------------------------------------------------===//
 
-include "RISCVInstrInfoZor.td"
+include "RISCVInstrInfoZhm.td"
 
 //===----------------------------------------------------------------------===//
 // Vendor extensions

@@ -1880,43 +1880,74 @@ let TargetPrefix = "riscv" in {
 
 
 //===----------------------------------------------------------------------===//
-// RISC-ViO
+// Heap Management Extension
 //
 // These intrinsics will lower directly into the corresponding instructions
-// added by the objective extension, if the extension is present.
+// added by the heap management extension, if the extension is present.
 let TargetPrefix = "riscv" in {
 
-  //Zor
-  class RiscvZorAlc
+  //Zhm
+  class RiscvZhmAlci
       : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
               [IntrNoMem, IntrWillReturn]>;
-  class RiscvZorAlci
-      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn]>;
-  class RiscvZorReadObject
-      : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
-              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
-  class RiscvZorDTP
-      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty, llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
-  class RiscvZorLWX
+  class RiscvZhmLWX
       : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
               [IntrReadMem, IntrWillReturn]>;
-  class RiscvZorSWX
+  class RiscvZhmSWX
       : Intrinsic<[], [llvm_i32_ty, llvm_ptr_ty],
               [IntrWriteMem]>;
+  class RiscvZhmLDX
+      : Intrinsic<[llvm_i64_ty], [llvm_ptr_ty],
+              [IntrReadMem, IntrWillReturn]>;
+  class RiscvZhmSDX
+      : Intrinsic<[], [llvm_i64_ty, llvm_ptr_ty],
+              [IntrWriteMem]>;
+
+  def int_riscv_alci   : RiscvZhmAlci;
+  def int_riscv_alci_d : RiscvZhmAlci;
+  def int_riscv_lw_x   : RiscvZhmLWX;
+  def int_riscv_sw_x   : RiscvZhmSWX;
+  def int_riscv_ld_x   : RiscvZhmLDX;
+  def int_riscv_sd_x   : RiscvZhmSDX;
+
+
+  class RiscvZhmAlc_32
+      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
+              [IntrNoMem, IntrWillReturn]>;
+  class RiscvZhmReadObject_32
+      : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+  class RiscvZhmDTP_32
+      : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty, llvm_i32_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
   
-  def int_riscv_alci   : RiscvZorAlci;
-  def int_riscv_alc    : RiscvZorAlc;
-  def int_riscv_alci_d : RiscvZorAlci;
-  def int_riscv_alc_d  : RiscvZorAlc;
-  def int_riscv_qsz    : RiscvZorReadObject;
+  def int_riscv_alc_32    : RiscvZhmAlc_32;
+  def int_riscv_alc_d_32  : RiscvZhmAlc_32;
+  def int_riscv_qsz_32    : RiscvZhmReadObject_32;
   
-  def int_riscv_dtp    : RiscvZorDTP;
-  def int_riscv_btd    : RiscvZorReadObject;
-  def int_riscv_itd    : RiscvZorReadObject;
-  def int_riscv_lw_x   : RiscvZorLWX;
-  def int_riscv_sw_x   : RiscvZorSWX;
+  def int_riscv_dtp_32    : RiscvZhmDTP_32;
+  def int_riscv_btd_32    : RiscvZhmReadObject_32;
+  def int_riscv_itd_32    : RiscvZhmReadObject_32;
+
+
+  class RiscvZhmAlc_64
+      : Intrinsic<[llvm_ptr_ty], [llvm_i64_ty],
+              [IntrNoMem, IntrWillReturn]>;
+  class RiscvZhmReadObject_64
+      : Intrinsic<[llvm_i64_ty], [llvm_ptr_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+  class RiscvZhmDTP_64
+      : Intrinsic<[llvm_ptr_ty], [llvm_i64_ty, llvm_i64_ty],
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
+  
+  def int_riscv_alc_64    : RiscvZhmAlc_64;
+  def int_riscv_alc_d_64  : RiscvZhmAlc_64;
+  def int_riscv_qsz_64    : RiscvZhmReadObject_64;
+  
+  def int_riscv_dtp_64    : RiscvZhmDTP_64;
+  def int_riscv_btd_64    : RiscvZhmReadObject_64;
+  def int_riscv_itd_64    : RiscvZhmReadObject_64;
+
 } // TargetPrefix = "riscv"
 
 // Vendor extensions

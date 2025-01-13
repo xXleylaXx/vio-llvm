@@ -138,21 +138,36 @@ def sm3p1 : RISCVBuiltin<"unsigned int(unsigned int)">;
 } // Features = "zksh"
 
 //===----------------------------------------------------------------------===//
-// Zor extension.
+// Zhm extension.
 //===----------------------------------------------------------------------===//
-let Features = "zor,32bit" in {
-def alci   : RISCVBuiltin<"unsigned int*(unsigned int)">;
-def alc    : RISCVBuiltin<"unsigned int*(unsigned int)">;
-def alci_d : RISCVBuiltin<"unsigned int*(unsigned int)">;
-def alc_d  : RISCVBuiltin<"unsigned int*(unsigned int)">;
-def qsz    : RISCVBuiltin<"unsigned int(unsigned int*)">;
+let Features = "zhm" in {
+def alci   : RISCVBuiltin<"void*(unsigned int)">;
+def alci_d : RISCVBuiltin<"void*(unsigned int)">;
+} // Features = "zhm"
 
-def dtp    : RISCVBuiltin<"unsigned int*(unsigned int, unsigned int)">;
-def btd    : RISCVBuiltin<"unsigned int(unsigned int*)">;
-def itd    : RISCVBuiltin<"unsigned int(unsigned int*)">;
-def lw_x   : RISCVBuiltin<"unsigned int(unsigned int*)">;
-def sw_x   : RISCVBuiltin<"void(unsigned int, unsigned int*)">;
-} // Features = "zor,32bit"
+let Features = "zhm,32bit" in {
+def alc_32    : RISCVBuiltin<"void*(unsigned int)">;
+def alc_d_32  : RISCVBuiltin<"void*(unsigned int)">;
+def qsz_32    : RISCVBuiltin<"unsigned int(void*)">;
+
+def dtp_32    : RISCVBuiltin<"void*(unsigned int, unsigned int)">;
+def btd_32    : RISCVBuiltin<"unsigned int(void*)">;
+def itd_32    : RISCVBuiltin<"unsigned int(void*)">;
+def lw_x      : RISCVBuiltin<"unsigned int(void*)">;
+def sw_x      : RISCVBuiltin<"void(unsigned int, void*)">;
+}// Features = "zhm,32bit"
+
+let Features = "zhm,64bit" in {
+def alc_64    : RISCVBuiltin<"void*(uint64_t)">;
+def alc_d_64  : RISCVBuiltin<"void*(uint64_t)">;
+def qsz_64    : RISCVBuiltin<"uint64_t(void*)">;
+
+def dtp_64    : RISCVBuiltin<"void*(uint64_t, uint64_t)">;
+def btd_64    : RISCVBuiltin<"uint64_t(void*)">;
+def itd_64    : RISCVBuiltin<"uint64_t(void*)">;
+def ld_x      : RISCVBuiltin<"uint64_t(void*)">;
+def sd_x      : RISCVBuiltin<"void(uint64_t, void*)">;
+} // Features = "zhm,32bit"
 
 } // Attributes = [Const, NoThrow]
 

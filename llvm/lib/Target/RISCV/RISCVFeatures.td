@@ -965,13 +965,13 @@ def FeatureStdExtSvukte
     : RISCVExperimentalExtension<0, 3,
                                  "Address-Independent Latency of User-Mode Faults to Supervisor Addresses">;
 
-// Objective extension
 
-def FeatureStdExtZor
-    : RISCVExtension<1, 0, "Objective Instructions">;
-def HasStdExtZor : Predicate<"Subtarget->hasStdExtZor()">,
-                      AssemblerPredicate<(all_of FeatureStdExtZor),
-                          "'Zor' (Objective Instructions)">;
+// Heap Management Extension
+def FeatureStdExtZhm
+    : RISCVExtension<1, 0, "Heap Management">;
+def HasStdExtZhm : Predicate<"Subtarget->hasStdExtZhm()">,
+                      AssemblerPredicate<(all_of FeatureStdExtZhm),
+                          "'zhm' (Heap Management)">;
 
 // Pointer Masking extensions
 

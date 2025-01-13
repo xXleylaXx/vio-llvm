@@ -782,12 +782,12 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
   if (RealStackSize == 0 && !MFI.adjustsStack() && RVVStackSize == 0)
     return;
 
-  //For Zor Extension, frame lowering is just allocating a Frame-Oblect
-  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()){
+  //For Zhm Extension, frame lowering is just allocating a Frame-Oblect
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()){
     RealStackSize = alignTo(MFI.getStackSize() + RVFI->getRVVPadding() + STI.getXLen()/8, getStackAlign());
     if (RealStackSize > 16383){
       MF.getFunction().getContext().diagnose(DiagnosticInfoUnsupported{
-          MF.getFunction(), "Frames larger than 16384 Bytes are not allowed with Zor."});
+          MF.getFunction(), "Frames larger than 16384 Bytes are not allowed with Zhm."});
     }
     BuildMI(MBB, MBBI, DL, TII->get(RISCV::ALCI), SPReg)
         .addImm(RealStackSize)
@@ -950,7 +950,7 @@ void RISCVFrameLowering::deallocateStack(MachineFunction &MF,
   const RISCVRegisterInfo *RI = STI.getRegisterInfo();
   const RISCVInstrInfo *TII = STI.getInstrInfo();
 
-  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor()){
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()){
     bool IsRV64 = STI.is64Bit();
     BuildMI(MBB, MBBI, DL, TII->get(IsRV64 ? RISCV::LD : RISCV::LW))
     .addReg(SPReg, RegState::Define)
@@ -1180,7 +1180,7 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
   if (FI >= MinCSFI && FI <= MaxCSFI) {
     FrameReg = SPReg;
 
-    if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+    if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
       Offset = -Offset;
     else if (FirstSPAdjustAmount)
       Offset += StackOffset::getFixed(FirstSPAdjustAmount);
@@ -1304,13 +1304,13 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
       Offset += StackOffset::get(getStackSizeWithRVVPadding(MF),
                                  RVFI->getRVVStackSize());
                                  
-      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
         Offset = StackOffset::get(getStackSizeWithRVVPadding(MF),
                                  RVFI->getRVVStackSize()) - Offset;
     } else {
       Offset += StackOffset::getFixed(MFI.getStackSize());
                                  
-      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZor())
+      if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
         Offset = StackOffset::getFixed(MFI.getStackSize()) - Offset;
     }
   } else if (MFI.getStackID(FI) == TargetStackID::ScalableVector) {
@@ -1723,10 +1723,10 @@ bool RISCVFrameLowering::assignCalleeSavedSpillSlots(
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
     
-  //Allocate constant spot for sp if Zor Extension is active
+  //Allocate constant spot for sp if Zhm Extension is active
   const auto &STI = MF.getSubtarget<RISCVSubtarget>();
   int64_t SlotSize = STI.getXLen() / 8;
-  if (STI.hasStdExtZor()){
+  if (STI.hasStdExtZhm()){
     MFI.CreateFixedSpillStackObject(SlotSize, 0);
   }
 
