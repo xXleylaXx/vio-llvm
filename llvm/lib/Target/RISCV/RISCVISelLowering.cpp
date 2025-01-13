@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGAddressAnalysis.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -281,7 +282,11 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
                    MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, XLenVT, Expand);
+  if (Subtarget.hasStdExtZhm()) {
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, XLenVT, Custom);
+  } else {
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, XLenVT, Expand);
+  }
 
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BR_CC, XLenVT, Expand);
@@ -7314,6 +7319,15 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
     if (Op.getOperand(1).getValueType().isFixedLengthVector())
       return lowerFixedLengthVectorStoreToRVV(Op, DAG);
     return Op;
+  }
+  case ISD::DYNAMIC_STACKALLOC: {
+    // Zhm: Allocate new Object instead of stack space
+    EVT PtrVT = getPointerTy(DAG.getDataLayout());
+    SDLoc DL(Op);
+    SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alc_32, DL, Subtarget.getXLenVT());
+    SDValue Alc =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, Op.getOperand(1));
+    return Alc;
   }
   case ISD::MLOAD:
   case ISD::VP_LOAD:
@@ -20104,7 +20118,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
     SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
     SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
     SDValue Res =
-        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Subtarget.getXLenVT(), ID, AlciLength);
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, AlciLength);
     Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
   }
 

@@ -391,6 +391,8 @@ bool RISCVFrameLowering::hasFPImpl(const MachineFunction &MF) const {
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
 
   const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
+    return false;
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
          RegInfo->hasStackRealignment(MF) || MFI.hasVarSizedObjects() ||
          MFI.isFrameAddressTaken();
@@ -404,6 +406,8 @@ bool RISCVFrameLowering::hasBP(const MachineFunction &MF) const {
   // we will adjust the stack pointer before call instruction. After the
   // adjustment, we can not use SP to access the stack objects for the
   // arguments. Instead, use BP to access these stack objects.
+  if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
+    return false;
   return (MFI.hasVarSizedObjects() ||
           (!hasReservedCallFrame(MF) && (!MFI.isMaxCallFrameSizeComputed() ||
                                          MFI.getMaxCallFrameSize() != 0))) &&
