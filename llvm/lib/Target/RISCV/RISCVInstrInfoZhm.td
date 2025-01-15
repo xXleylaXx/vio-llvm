@@ -5,7 +5,7 @@ def uimm14 : RISCVUImmOp<14>, ImmLeaf<XLenVT, [{
 
 def OPC_HM : RISCVOpcode<"HM", 0b0001011>;
 
-let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   class Alc_i<bits<3> funct3, string opcodestr, DAGOperand rty = GPR>
     : RVInstI<funct3, OPC_HM, (outs rty:$rd), (ins uimm14:$imm14),
               opcodestr, "$rd, ${imm14}">, Sched<[]> {
@@ -15,15 +15,19 @@ let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   }
 }
 
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+  class Alc<bits<3> funct3, string opcodestr, DAGOperand rty = GPR>
+    : RVInstR<0b0000000, funct3, OPC_HM, (outs rty:$rd), (ins GPR:$rs1),
+              opcodestr, "$rd, $rs1">, Sched<[]> {
+    let rs2 = 0b00000;
+  }
+}
+
 let Predicates = [HasStdExtZhm] in {
   def ALCI   : Alc_i<0b010, "alci">;
   def ALCI_D : Alc_i<0b011, "alci.d">;
-  def ALC    : RVInstR<0b0000000, 0b000, OPC_HM, (outs GPR:$rd), (ins GPR:$rs1), "alc", "$rd, $rs1">{
-    let rs2 = 0b00000;
-  }
-  def ALC_D  : RVInstR<0b0000000, 0b001, OPC_HM, (outs GPR:$rd), (ins GPR:$rs1), "alc.d", "$rd, $rs1">{
-    let rs2 = 0b00000;
-  }
+  def ALC    : Alc<0b000, "alc">;
+  def ALC_D  : Alc<0b001, "alc.d">;
   def QSZ  : RVInstR<0b0000000, 0b100, OPC_HM, (outs GPR:$rd), (ins GPR:$rs1), "qsz", "$rd, $rs1">{
     let rs2 = 0b00000;
   }

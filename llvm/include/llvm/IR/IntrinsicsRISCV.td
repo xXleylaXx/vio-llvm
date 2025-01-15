@@ -1889,7 +1889,7 @@ let TargetPrefix = "riscv" in {
   //Zhm
   class RiscvZhmAlci
       : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn]>;
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
   class RiscvZhmLWX
       : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
               [IntrReadMem, IntrWillReturn]>;
@@ -1913,7 +1913,7 @@ let TargetPrefix = "riscv" in {
 
   class RiscvZhmAlc_32
       : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty],
-              [IntrNoMem, IntrWillReturn]>;
+              [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;
   class RiscvZhmReadObject_32
       : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty],
               [IntrNoMem, IntrWillReturn, IntrSpeculatable]>;

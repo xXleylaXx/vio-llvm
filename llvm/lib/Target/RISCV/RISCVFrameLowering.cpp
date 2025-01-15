@@ -23,8 +23,11 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/LEB128.h"
+#include "llvm/Support/Debug.h"
 
 #include <algorithm>
+
+#define DEBUG_TYPE "codegen"
 
 using namespace llvm;
 
@@ -98,7 +101,8 @@ RISCVFrameLowering::RISCVFrameLowering(const RISCVSubtarget &STI)
     : TargetFrameLowering(
           StackGrowsDown, getABIStackAlignment(STI.getTargetABI()),
           /*LocalAreaOffset=*/0,
-          /*TransientStackAlignment=*/getABIStackAlignment(STI.getTargetABI())),
+          /*TransientStackAlignment=*/getABIStackAlignment(STI.getTargetABI()),
+          STI.isStackRealignmentSupported()),
       STI(STI) {}
 
 // The register used to hold the frame pointer.
@@ -786,9 +790,9 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
   if (RealStackSize == 0 && !MFI.adjustsStack() && RVVStackSize == 0)
     return;
 
-  //For Zhm Extension, frame lowering is just allocating a Frame-Oblect
+  //For Zhm Extension, frame lowering is just allocating a Frame-Object
   if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()){
-    RealStackSize = alignTo(MFI.getStackSize() + RVFI->getRVVPadding() + STI.getXLen()/8, getStackAlign());
+    RealStackSize = alignTo(MFI.getStackSize() + RVFI->getRVVPadding() + STI.getXLen()/8, Align(MF.getSubtarget<RISCVSubtarget>().getXLen() / 8));
     if (RealStackSize > 16383){
       MF.getFunction().getContext().diagnose(DiagnosticInfoUnsupported{
           MF.getFunction(), "Frames larger than 16384 Bytes are not allowed with Zhm."});
@@ -1020,8 +1024,9 @@ void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
   uint64_t FPOffset = RealStackSize - RVFI->getVarArgsSaveSize();
   uint64_t RVVStackSize = RVFI->getRVVStackSize();
 
-  bool RestoreSPFromFP = RI->hasStackRealignment(MF) ||
-                         MFI.hasVarSizedObjects() || !hasReservedCallFrame(MF);
+  bool RestoreSPFromFP = (RI->hasStackRealignment(MF) ||
+                         MFI.hasVarSizedObjects() || !hasReservedCallFrame(MF))
+                         && !MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm();
   if (RVVStackSize) {
     // If RestoreSPFromFP the stack pointer will be restored using the frame
     // pointer value.
@@ -1042,7 +1047,7 @@ void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
     emitCalleeSavedRVVEpilogCFI(MBB, LastFrameDestroy);
   }
 
-  if (FirstSPAdjustAmount) {
+  if (FirstSPAdjustAmount && !MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()) {
     uint64_t SecondSPAdjustAmount =
         getStackSizeWithRVVPadding(MF) - FirstSPAdjustAmount;
     assert(SecondSPAdjustAmount > 0 &&
@@ -1076,7 +1081,7 @@ void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
   // is enough, but we also don't preserve that at prologue/epilogue when
   // have vector objects in stack.
   if (RestoreSPFromFP) {
-    assert(hasFP(MF) && "frame pointer should not have been eliminated");
+    assert(hasFP(MF) && "frame pointer should not have been eliminated.");
     RI->adjustReg(MBB, LastFrameDestroy, DL, SPReg, FPReg,
                   StackOffset::getFixed(-FPOffset), MachineInstr::FrameDestroy,
                   getStackAlign());
@@ -1269,7 +1274,7 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
 
   // This case handles indexing off both SP and BP.
   // If indexing off SP, there must not be any var sized objects
-  assert(FrameReg == RISCVABI::getBPReg() || !MFI.hasVarSizedObjects());
+  assert(FrameReg == RISCVABI::getBPReg() || !MFI.hasVarSizedObjects() || MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm());
 
   // When using SP to access frame objects, we need to add RVV stack size.
   //

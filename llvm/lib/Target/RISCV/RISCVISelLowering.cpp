@@ -7324,10 +7324,12 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
     // Zhm: Allocate new Object instead of stack space
     EVT PtrVT = getPointerTy(DAG.getDataLayout());
     SDLoc DL(Op);
-    SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alc_32, DL, Subtarget.getXLenVT());
-    SDValue Alc =
-        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, Op.getOperand(1));
-    return Alc;
+    SDValue Chain = Op.getOperand(0);
+    SDValue Res = SDValue(
+      DAG.getMachineNode(RISCV::ALC, DL, PtrVT,Op.getOperand(1)),
+      0);
+
+    return DAG.getMergeValues({Res, Chain}, DL);
   }
   case ISD::MLOAD:
   case ISD::VP_LOAD:
@@ -20115,10 +20117,13 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
   if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
-    SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
+    SDValue Res = SDValue(
+      DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
+      0);
+    /*SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
     SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
     SDValue Res =
-        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, AlciLength);
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, AlciLength);*/
     Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
   }
 

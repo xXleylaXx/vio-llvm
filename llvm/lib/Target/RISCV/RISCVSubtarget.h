@@ -239,6 +239,8 @@ public:
     return UserReservedRegister[i];
   }
 
+  bool isStackRealignmentSupported() const { return !hasStdExtZhm(); }
+
   // XRay support - require D and C extensions.
   bool isXRaySupported() const override { return hasStdExtD() && hasStdExtC(); }
 
