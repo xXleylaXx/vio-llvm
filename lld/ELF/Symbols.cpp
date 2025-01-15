@@ -149,6 +149,9 @@ static uint64_t getSymVA(Ctx &ctx, const Symbol &sym, int64_t addend) {
 }
 
 uint64_t Symbol::getVA(Ctx &ctx, int64_t addend) const {
+  if (inOtherObject)
+    return 0;
+
   return getSymVA(ctx, *this, addend) + addend;
 }
 
