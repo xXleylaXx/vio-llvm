@@ -274,8 +274,7 @@ uint8_t Symbol::computeBinding(Ctx &ctx) const {
 }
 
 bool Symbol::includeInDynsym(Ctx &ctx) const {
-  std::cout << "includeInDynSym(" << getName().str() << ")\n";
-  if (inOtherObject)
+    if (inOtherObject)
     return true;
   if (computeBinding(ctx) == STB_LOCAL)
     return false;

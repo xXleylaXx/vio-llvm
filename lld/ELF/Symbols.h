@@ -20,7 +20,6 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Compiler.h"
 #include <tuple>
-#include <iostream>
 
 namespace lld::elf {
 class CommonSymbol;

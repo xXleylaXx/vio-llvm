@@ -26,7 +26,6 @@
 #include <optional>
 #include <vector>
 
-#include <iostream>
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -1166,8 +1165,6 @@ template <class ELFT>
 void InputSectionBase::relocate(Ctx &ctx, uint8_t *buf, uint8_t *bufEnd) {
   if ((flags & SHF_EXECINSTR) && LLVM_UNLIKELY(getFile<ELFT>()->splitStack))
     adjustSplitStackFunctionPrologues<ELFT>(ctx, buf, bufEnd);
-  
-  std::cout << "InputSectionBase::relocate()\n";
 
   if (flags & SHF_ALLOC) {
     ctx.target->relocateAlloc(*this, buf);
@@ -1177,7 +1174,6 @@ void InputSectionBase::relocate(Ctx &ctx, uint8_t *buf, uint8_t *bufEnd) {
   auto *sec = cast<InputSection>(this);
   // For a relocatable link, also call relocateNonAlloc() to rewrite applicable
   // locations with tombstone values.
-  std::cout << "InputSectionBase::relocatenonallo()\n";
   invokeOnRelocs(*sec, sec->relocateNonAlloc<ELFT>, ctx, buf);
 }
 

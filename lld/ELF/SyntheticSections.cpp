@@ -45,7 +45,6 @@
 #include <cinttypes>
 #include <cstdlib>
 
-#include <iostream>
 
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -667,10 +666,8 @@ GotSection::GotSection(Ctx &ctx)
 }
 
 void GotSection::addConstant(const Relocation &r) { 
-      std::cout << "gotsection::addconstant " << r.sym->getName().str() << " typ: " << r.type << "\n";
-    if(r.sym->getInOtherObject()){
-      std::cout << "in other obj -> non const\n";
-      addEntry(*r.sym);
+          if(r.sym->getInOtherObject()){
+            addEntry(*r.sym);
     } else {
       relocations.push_back(r); 
     }

@@ -906,8 +906,7 @@ void elf::addGotEntry(Ctx &ctx, Symbol &sym) {
   // Otherwise, the value is either a link-time constant or the load base
   // plus a constant.
   if ((!ctx.arg.isPic || isAbsolute(sym)) && !(sym.getInOtherObject())){
-    std::cout << "addgotentry -> addconstant  nm:" << sym.getName().str() << "inothero: " << sym.getInOtherObject() << "\n";
-    ctx.in.got->addConstant({R_ABS, ctx.target->symbolicRel, off, 0, &sym});
+        ctx.in.got->addConstant({R_ABS, ctx.target->symbolicRel, off, 0, &sym});
   }
   else
     addRelativeReloc(ctx, *ctx.in.got, off, sym, 0, R_ABS,
@@ -1055,7 +1054,7 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
   // If non-ifunc non-preemptible, change PLT to direct call and optimize GOT
   // indirection.
 
-  // local symbols which are used with %got_off need to included in .dynsym in order for the linker to include them
+  // local symbols which are used with %got_off need to included in .dynsym in order for the linker to fill them in at load time
  if(sym.getInOtherObject()){
     if(sym.isExported == 0)
       ctx.mainPart->dynSymTab->addSymbol(&sym);
