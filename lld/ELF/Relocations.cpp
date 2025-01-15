@@ -882,7 +882,7 @@ static void addRelativeReloc(Ctx &ctx, InputSectionBase &isec,
 
 template <class PltSection, class GotPltSection>
 static void addPltEntry(Ctx &ctx, PltSection &plt, GotPltSection &gotPlt,
-                        RelocationBaseSection &rel, RelType type, Symbol &sym) {
+                        RelocationBaseSection &rel, RelType type, Symbol &sym) {               
   plt.addEntry(sym);
   gotPlt.addEntry(sym);
   rel.addReloc({type, &gotPlt, sym.getGotPltOffset(ctx),
@@ -1264,7 +1264,9 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
              << "' cannot be preempted; recompile with -fPIE";
         printLocation(diag, *sec, sym, offset);
       }
-      sym.setFlags(NEEDS_COPY | NEEDS_PLT);
+      if(!sym.getInOtherObject())
+        sym.setFlags(NEEDS_COPY | NEEDS_PLT);
+
       sec->addReloc({expr, type, offset, addend, &sym});
       return;
     }

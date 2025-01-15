@@ -433,10 +433,7 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   
   case R_RISCV_GOT_OFF: {
     uint64_t got_ix = rel.sym->getGotOffset(ctx);
-    //ctx.in.relaPlt->addPltEntry(ctx, PltSection &plt, GotPltSection &gotPlt, RelocationBaseSection &rel, RelType type, Symbol &sym)
-    //auto diag = Err(ctx);
-    //diag << "got got off" << rel.sym->getName() << " " << rel.sym->kind() << "\n";
-        write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
+    write32le(loc, (read32le(loc) & 0xFFFFF) | ((got_ix << 20) & 0xFFF00000));
     return;
   }
 
