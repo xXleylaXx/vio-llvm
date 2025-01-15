@@ -2243,8 +2243,8 @@ void SymbolTableBaseSection::sortSymTabSymbols() {
 }
 
 void SymbolTableBaseSection::addSymbol(Symbol *b) {
-  // Adding a local symbol to a .dynsym is a bug.
-  assert(this->type != SHT_DYNSYM || !b->isLocal());
+  // Adding a local symbol to a .dynsym is a bug when the symbol is not used with a %got_off
+  assert((this->type != SHT_DYNSYM || !b->isLocal()) || b->getInOtherObject());
   symbols.push_back({b, strTabSec.addString(b->getName(), false)});
 }
 

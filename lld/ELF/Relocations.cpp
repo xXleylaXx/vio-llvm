@@ -1054,6 +1054,13 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
                                    Symbol &sym, int64_t addend) const {
   // If non-ifunc non-preemptible, change PLT to direct call and optimize GOT
   // indirection.
+
+  // local symbols which are used with %got_off need to included in .dynsym in order for the linker to include them
+ if(sym.getInOtherObject()){
+    if(sym.isExported == 0)
+      ctx.mainPart->dynSymTab->addSymbol(&sym);
+  }
+
   const bool isIfunc = sym.isGnuIFunc();
   if (!sym.isPreemptible && (!isIfunc || ctx.arg.zIfuncNoplt)) {
     if (expr != R_GOT_PC) {
