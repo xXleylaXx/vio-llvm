@@ -3090,15 +3090,21 @@ bool IRTranslator::translateAlloca(const User &U,
   }
 
   Type *Ty = AI.getAllocatedType();
-
-  Register Res = getOrCreateVReg(AI);
   Register AllocSize = MRI->createGenericVirtualRegister(IntPtrTy);
   Register TySize =
       getOrCreateVReg(*ConstantInt::get(IntPtrIRTy, DL->getTypeAllocSize(Ty)));
   MIRBuilder.buildMul(AllocSize, NumElts, TySize);
-  auto MIB = MIRBuilder.buildIntrinsic(Intrinsic::riscv_alc_32, Res, false, false);
-  ((SrcOp)AllocSize).addSrcToMIB(MIB);
-  return true;
+
+  // If the used Subtarget supports allocation on a heap, we can translate
+  // this alloca directly to an allocation instruction.
+  // FIXME: make this Intrinsic Target independent!
+  if (MF->getSubtarget().canAllocateOnHeap()) {
+    bool Is64Bit = MIRBuilder.getDataLayout().getPointerSizeInBits() == 64;
+    Register Res = getOrCreateVReg(AI);
+    auto MIB = MIRBuilder.buildIntrinsic(Is64Bit ? Intrinsic::riscv_alc_64 : Intrinsic::riscv_alc_32, Res, false, false);
+    ((SrcOp)AllocSize).addSrcToMIB(MIB);
+    return true;
+  }
 
   // Round the size of the allocation up to the stack alignment size
   // by add SA-1 to the size. This doesn't overflow because we're computing

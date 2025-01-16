@@ -4515,7 +4515,7 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
   setValue(&I, DSA);
   DAG.setRoot(DSA.getValue(1));
 
-  assert(FuncInfo.MF->getFrameInfo().hasVarSizedObjects());
+  assert(FuncInfo.MF->getFrameInfo().hasVarSizedObjects() || FuncInfo.MF->getSubtarget().canAllocateOnHeap());
 }
 
 static const MDNode *getRangeMetadata(const Instruction &I) {

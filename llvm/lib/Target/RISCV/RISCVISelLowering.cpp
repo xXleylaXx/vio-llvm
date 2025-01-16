@@ -20120,10 +20120,6 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
     SDValue Res = SDValue(
       DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
       0);
-    /*SDValue AlciLength = DAG.getConstant(NumBytes, DL, Subtarget.getXLenVT());
-    SDValue ID = DAG.getTargetConstant(Intrinsic::riscv_alci, DL, Subtarget.getXLenVT());
-    SDValue Res =
-        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, PtrVT, ID, AlciLength);*/
     Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
   }
 
@@ -20156,7 +20152,9 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Copy argument values to their designated locations.
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-  SDValue StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
+  SDValue StackPtr;
+  if (Subtarget.hasStdExtZhm())
+    StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
   for (unsigned i = 0, j = 0, e = ArgLocs.size(), OutIdx = 0; i != e;
        ++i, ++OutIdx) {
     CCValAssign &VA = ArgLocs[i];

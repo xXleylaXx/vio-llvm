@@ -208,6 +208,10 @@ private:
   /// Whether the function has the \c alignstack attribute.
   bool ForcedRealign;
 
+  /// When the Subtarget is able to allocate VarSized outside of the Stack,
+  /// we do not need to care about them anymore here.
+  bool CanHoldVarSizedObjects = true;
+
   /// The list of stack objects allocated.
   std::vector<StackObject> Objects;
 
@@ -350,6 +354,8 @@ public:
 
   /// Return true if there are any stack objects in this function.
   bool hasStackObjects() const { return !Objects.empty(); }
+
+  void disableVarSizedFrameObjects() { CanHoldVarSizedObjects = false; }
 
   /// This method may be called any time after instruction
   /// selection is complete to determine if the stack frame for this function

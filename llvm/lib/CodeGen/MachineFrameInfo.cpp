@@ -73,6 +73,8 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size, Align Alignment) {
 
 int MachineFrameInfo::CreateVariableSizedObject(Align Alignment,
                                                 const AllocaInst *Alloca) {
+  assert(CanHoldVarSizedObjects && "Trying to allocate a VarSized Object on a Stack that cannot hold them.");
+
   HasVarSizedObjects = true;
   Alignment = clampStackAlignment(!StackRealignable, Alignment, StackAlignment);
   Objects.push_back(StackObject(0, Alignment, 0, false, false, Alloca, true));

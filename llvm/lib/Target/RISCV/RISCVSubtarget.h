@@ -387,6 +387,8 @@ public:
 
   void overridePostRASchedPolicy(MachineSchedPolicy &Policy,
                                  unsigned NumRegionInstrs) const override;
+
+  bool canAllocateOnHeap() const override { return hasStdExtZhm(); }
 };
 } // End llvm namespace
 

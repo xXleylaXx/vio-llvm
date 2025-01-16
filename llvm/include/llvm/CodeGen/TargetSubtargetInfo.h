@@ -352,6 +352,9 @@ public:
   }
 
   virtual bool isRegisterReservedByUser(Register R) const { return false; }
+
+  virtual bool canAllocateOnHeap() const { return false; }
+
 };
 } // end namespace llvm
 

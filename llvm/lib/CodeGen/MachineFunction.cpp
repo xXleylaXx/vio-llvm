@@ -206,6 +206,9 @@ void MachineFunction::init() {
       getFnStackAlignment(STI, F), /*StackRealignable=*/CanRealignSP,
       /*ForcedRealign=*/ForceRealignSP && CanRealignSP);
 
+  if (STI->canAllocateOnHeap())
+    FrameInfo->disableVarSizedFrameObjects();
+
   setUnsafeStackSize(F, *FrameInfo);
 
   if (F.hasFnAttribute(Attribute::StackAlignment))
