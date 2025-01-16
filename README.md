@@ -43,6 +43,15 @@ chat](https://discord.gg/xS7Z362),
 The LLVM project has adopted a [code of conduct](https://llvm.org/docs/CodeOfConduct.html) for
 participants to all modes of communication within the project.
 
+## How to install for vio-swkit
+
+just do:
+'''
+chmod +x install.sh
+./install.sh
+'''
+
+
 ## How ViO was built
 
 ```
