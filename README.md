@@ -46,10 +46,10 @@ participants to all modes of communication within the project.
 ## How to install for vio-swkit
 
 just do:
-'''
+```
 chmod +x install.sh
 ./install.sh
-'''
+```
 
 
 ## How ViO was built
