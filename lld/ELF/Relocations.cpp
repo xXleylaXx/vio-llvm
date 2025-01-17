@@ -58,6 +58,7 @@
 #include "llvm/Support/Endian.h"
 #include <algorithm>
 
+
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
@@ -1054,10 +1055,26 @@ void RelocationScanner::processAux(RelExpr expr, RelType type, uint64_t offset,
   // If non-ifunc non-preemptible, change PLT to direct call and optimize GOT
   // indirection.
 
+  
   // local symbols which are used with %got_off need to included in .dynsym in order for the linker to fill them in at load time
- if(sym.getInOtherObject()){
-    if(sym.isExported == 0)
-      ctx.mainPart->dynSymTab->addSymbol(&sym);
+  if(sym.getInOtherObject()){
+    SymbolTableBaseSection *dynSymTab = ctx.mainPart->dynSymTab.get();
+    if(sym.isExported == 0){
+      // check if this symbol is already in the dynsym, we dont want duplicates
+      StringRef nname = sym.getName();
+      bool alreadyContained = false;
+       for (const SymbolTableEntry &s : dynSymTab->getSymbols()) {
+        StringRef iname = s.sym->getName();
+
+        if(iname == nname){
+          alreadyContained = true;
+          break;
+        }
+      } 
+
+      if(!alreadyContained)
+        dynSymTab->addSymbol(&sym);
+    }
   }
 
   const bool isIfunc = sym.isGnuIFunc();
