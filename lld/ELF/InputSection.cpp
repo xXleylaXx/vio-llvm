@@ -26,6 +26,7 @@
 #include <optional>
 #include <vector>
 
+
 using namespace llvm;
 using namespace llvm::ELF;
 using namespace llvm::object;
@@ -1041,6 +1042,8 @@ void InputSection::relocateNonAlloc(Ctx &ctx, uint8_t *buf,
       addend += target.getImplicitAddend(bufLoc, type);
 
     Symbol &sym = f->getRelocTargetSym(rel);
+    if(type == R_RISCV_GOT_OFF)
+      sym.setInOtherObject();
     RelExpr expr = target.getRelExpr(type, sym, bufLoc);
     if (expr == R_NONE)
       continue;

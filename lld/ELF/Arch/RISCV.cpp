@@ -18,6 +18,7 @@
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/TargetParser/RISCVISAInfo.h"
 
+
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::support::endian;
@@ -259,7 +260,8 @@ RelType RISCV::getDynRel(RelType type) const {
 
 RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
                           const uint8_t *loc) const {
-  switch (type) {
+
+    switch (type) {
   case R_RISCV_NONE:
     return R_NONE;
   case R_RISCV_32:
@@ -967,6 +969,7 @@ void RISCV::finalizeRelax(int passes) const {
         // we are in the middle of a 4-byte NOP, and we need to rewrite the NOP
         // sequence.
         int64_t skip = 0;
+
         if (r.type == R_RISCV_ALIGN) {
           if (remove % 4 || r.addend % 4) {
             skip = r.addend - remove;
@@ -996,7 +999,7 @@ void RISCV::finalizeRelax(int passes) const {
             break;
           case R_RISCV_32:
             // Used by relaxTlsLe to write a uint32_t then suppress the handling
-            // in relocateAlloc.
+            // in relocateAlloc
             skip = 4;
             write32le(p, aux.writes[writesIdx++]);
             aux.relocTypes[i] = R_RISCV_NONE;

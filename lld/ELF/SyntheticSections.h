@@ -460,7 +460,7 @@ public:
   uint64_t getOffset() const;
   uint32_t getSymIndex(SymbolTableBaseSection *symTab) const;
   bool needsDynSymIndex() const {
-    return kind == AgainstSymbol || kind == AgainstSymbolWithTargetVA;
+    return kind == AgainstSymbol || kind == AgainstSymbolWithTargetVA || sym->getInOtherObject();
   }
 
   /// Computes the addend of the dynamic relocation. Note that this is not the

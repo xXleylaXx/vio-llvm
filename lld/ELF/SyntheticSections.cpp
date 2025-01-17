@@ -45,6 +45,7 @@
 #include <cinttypes>
 #include <cstdlib>
 
+
 using namespace llvm;
 using namespace llvm::dwarf;
 using namespace llvm::ELF;
@@ -664,7 +665,13 @@ GotSection::GotSection(Ctx &ctx)
   numEntries = ctx.target->gotHeaderEntriesNum;
 }
 
-void GotSection::addConstant(const Relocation &r) { relocations.push_back(r); }
+void GotSection::addConstant(const Relocation &r) { 
+          if(r.sym->getInOtherObject()){
+            addEntry(*r.sym);
+    } else {
+      relocations.push_back(r); 
+    }
+    }
 void GotSection::addEntry(const Symbol &sym) {
   assert(sym.auxIdx == ctx.symAux.size() - 1);
   ctx.symAux.back().gotIdx = numEntries++;
@@ -1518,7 +1525,7 @@ DynamicSection<ELFT>::computeContents() {
       }
     }
   }
-
+  // VIO TODO
   addInSec(DT_SYMTAB, *part.dynSymTab);
   addInt(DT_SYMENT, sizeof(Elf_Sym));
   addInSec(DT_STRTAB, *part.dynStrTab);
@@ -2233,8 +2240,8 @@ void SymbolTableBaseSection::sortSymTabSymbols() {
 }
 
 void SymbolTableBaseSection::addSymbol(Symbol *b) {
-  // Adding a local symbol to a .dynsym is a bug.
-  assert(this->type != SHT_DYNSYM || !b->isLocal());
+  // Adding a local symbol to a .dynsym is a bug when the symbol is not used with a %got_off
+  assert((this->type != SHT_DYNSYM || !b->isLocal()) || b->getInOtherObject());
   symbols.push_back({b, strTabSec.addString(b->getName(), false)});
 }
 
@@ -2295,6 +2302,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *buf) {
   bool relocatable = ctx.arg.relocatable;
   for (SymbolTableEntry &ent : symbols) {
     Symbol *sym = ent.sym;
+
+
     bool isDefinedHere = type == SHT_SYMTAB || sym->partition == partition;
 
     // Set st_name, st_info and st_other.

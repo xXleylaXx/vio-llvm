@@ -81,6 +81,8 @@ protected:
   // 32-bit size saves space.
   uint32_t nameSize;
 
+  bool inOtherObject;
+
 public:
   // The next three fields have the same meaning as the ELF symbol attributes.
   // type and binding are placed in this order to optimize generating st_info,
@@ -157,6 +159,15 @@ public:
     stOther = (stOther & ~3) | visibility;
   }
 
+  void setInOtherObject(){
+    inOtherObject = true;
+    //symbolKind = lld::elf::Symbol::UndefinedKind;
+  }
+
+  bool getInOtherObject() const{
+    return inOtherObject;
+  }
+
   bool includeInDynsym(Ctx &) const;
   uint8_t computeBinding(Ctx &) const;
   bool isGlobal() const { return binding == llvm::ELF::STB_GLOBAL; }
@@ -168,7 +179,7 @@ public:
   bool isShared() const { return symbolKind == SharedKind; }
   bool isPlaceholder() const { return symbolKind == PlaceholderKind; }
 
-  bool isLocal() const { return binding == llvm::ELF::STB_LOCAL; }
+  bool isLocal() const { return (binding == llvm::ELF::STB_LOCAL) && !inOtherObject; }
 
   bool isLazy() const { return symbolKind == LazyKind; }
 
@@ -244,7 +255,7 @@ private:
 protected:
   Symbol(Kind k, InputFile *file, StringRef name, uint8_t binding,
          uint8_t stOther, uint8_t type)
-      : file(file), nameData(name.data()), nameSize(name.size()), type(type),
+      : file(file), nameData(name.data()), nameSize(name.size()), inOtherObject(false), type(type),
         binding(binding), stOther(stOther), symbolKind(k), exportDynamic(false),
         ltoCanOmit(false), archSpecificBit(false) {}
 
