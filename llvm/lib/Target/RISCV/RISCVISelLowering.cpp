@@ -19895,6 +19895,7 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
                      CallConv == CallingConv::Fast ? CC_RISCV_FastCC
                                                    : CC_RISCV);
 
+  bool HasMemoryArgs = false;
   for (unsigned i = 0, e = ArgLocs.size(), InsIdx = 0; i != e; ++i, ++InsIdx) {
     CCValAssign &VA = ArgLocs[i];
     SDValue ArgValue;
@@ -19905,8 +19906,10 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
       ArgValue = unpackF64OnRV32DSoftABI(DAG, Chain, VA, ArgLocs[++i], DL);
     } else if (VA.isRegLoc())
       ArgValue = unpackFromRegLoc(DAG, Chain, VA, DL, Ins[InsIdx], *this);
-    else
+    else {
       ArgValue = unpackFromMemLoc(DAG, Chain, VA, DL);
+      HasMemoryArgs = true;
+    }
 
     if (VA.getLocInfo() == CCValAssign::Indirect) {
       // If the original argument was split and passed by reference (e.g. i128
@@ -19934,6 +19937,14 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
       continue;
     }
     InVals.push_back(ArgValue);
+  }
+
+  if (HasMemoryArgs){
+    MachineRegisterInfo &RegInfo1 = MF.getRegInfo();
+    Register VReg = RegInfo1.createVirtualRegister(&RISCV::GPRRegClass);
+    RegInfo1.addLiveIn(RISCV::X17, VReg);
+    SDValue ArgReg = DAG.getCopyFromReg(Chain, DL, VReg, PtrVT);
+    InVals.push_back(ArgReg);
   }
 
   if (any_of(ArgLocs,
@@ -20116,13 +20127,6 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
-  if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
-    SDValue Res = SDValue(
-      DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
-      0);
-    Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, Res);
-  }
-
   // Create local copies for byval args
   SmallVector<SDValue, 8> ByValArgs;
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
@@ -20153,8 +20157,18 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
-  if (Subtarget.hasStdExtZhm())
-    StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
+  //if (Subtarget.hasStdExtZhm())
+  //  StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
+
+  SDValue ArgAlci;
+  if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
+    ArgAlci = SDValue(
+      DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
+      0);
+    //Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, ArgAlci);
+    StackPtr = ArgAlci;
+  }
+
   for (unsigned i = 0, j = 0, e = ArgLocs.size(), OutIdx = 0; i != e;
        ++i, ++OutIdx) {
     CCValAssign &VA = ArgLocs[i];
@@ -20285,6 +20299,11 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Glue = Chain.getValue(1);
   }
 
+  if (ArgAlci) {
+    Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, ArgAlci, Glue);
+    Glue = Chain.getValue(1);
+  }
+
   // Validate that none of the argument registers have been marked as
   // reserved, if so report an error. Do the same for the return address if this
   // is not a tailcall.
@@ -20298,7 +20317,11 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // TargetGlobalAddress/TargetExternalSymbol node so that legalize won't
   // split it and then direct call can be matched by PseudoCALL.
   bool CalleeIsLargeExternalSymbol = false;
-  if (getTargetMachine().getCodeModel() == CodeModel::Large) {
+  if (Subtarget.hasStdExtZhm()){
+    if (auto *S = dyn_cast<GlobalAddressSDNode>(Callee))
+      Callee = getAddr(S, DAG);
+
+  } else if (getTargetMachine().getCodeModel() == CodeModel::Large) {
     if (auto *S = dyn_cast<GlobalAddressSDNode>(Callee))
       Callee = getLargeGlobalAddress(S, DL, PtrVT, DAG);
     else if (auto *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
@@ -20321,6 +20344,10 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // known live into the call.
   for (auto &Reg : RegsToPass)
     Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
+
+  if (ArgAlci) {
+    Ops.push_back(DAG.getRegister(RISCV::X17, PtrVT));
+  }
 
   if (!IsTailCall) {
     // Add a register mask operand representing the call-preserved registers.
