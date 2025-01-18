@@ -19769,6 +19769,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain,
                                 const CCValAssign &VA, const SDLoc &DL) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   EVT LocVT = VA.getLocVT();
   EVT ValVT = VA.getValVT();
   EVT PtrVT = MVT::getIntegerVT(DAG.getDataLayout().getPointerSizeInBits(0));
@@ -19784,8 +19785,10 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain,
   SDValue Val;
   SDValue FIN;
   if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm()) {
-    SDValue ArgPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
-    FIN = DAG.getNode(ISD::ADD, DL, PtrVT, ArgPtr,
+    Register VReg = RegInfo.createVirtualRegister(&RISCV::GPRRegClass);
+    RegInfo.addLiveIn(RISCV::X17, VReg);
+    SDValue ArgReg = DAG.getCopyFromReg(Chain, DL, VReg, PtrVT);
+    FIN = DAG.getNode(ISD::ADD, DL, PtrVT, ArgReg,
                   DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
   } else {
     FIN = DAG.getFrameIndex(FI, PtrVT);
@@ -19938,15 +19941,7 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
     }
     InVals.push_back(ArgValue);
   }
-
-  if (HasMemoryArgs){
-    MachineRegisterInfo &RegInfo1 = MF.getRegInfo();
-    Register VReg = RegInfo1.createVirtualRegister(&RISCV::GPRRegClass);
-    RegInfo1.addLiveIn(RISCV::X17, VReg);
-    SDValue ArgReg = DAG.getCopyFromReg(Chain, DL, VReg, PtrVT);
-    InVals.push_back(ArgReg);
-  }
-
+  
   if (any_of(ArgLocs,
              [](CCValAssign &VA) { return VA.getLocVT().isScalableVector(); }))
     MF.getInfo<RISCVMachineFunctionInfo>()->setIsVectorCall();
