@@ -23,6 +23,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -7811,6 +7812,11 @@ SDValue RISCVTargetLowering::lowerADJUST_TRAMPOLINE(SDValue Op,
 static SDValue getTargetNode(GlobalAddressSDNode *N, const SDLoc &DL, EVT Ty,
                              SelectionDAG &DAG, unsigned Flags) {
   return DAG.getTargetGlobalAddress(N->getGlobal(), DL, Ty, 0, Flags);
+}
+
+static SDValue getTargetNode(ExternalSymbolSDNode *N, const SDLoc &DL, EVT Ty,
+                             SelectionDAG &DAG, unsigned Flags) {
+  return DAG.getTargetExternalSymbol(N->getSymbol(), Ty, Flags);
 }
 
 static SDValue getTargetNode(BlockAddressSDNode *N, const SDLoc &DL, EVT Ty,
@@ -19898,7 +19904,6 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
                      CallConv == CallingConv::Fast ? CC_RISCV_FastCC
                                                    : CC_RISCV);
 
-  bool HasMemoryArgs = false;
   for (unsigned i = 0, e = ArgLocs.size(), InsIdx = 0; i != e; ++i, ++InsIdx) {
     CCValAssign &VA = ArgLocs[i];
     SDValue ArgValue;
@@ -19911,7 +19916,6 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
       ArgValue = unpackFromRegLoc(DAG, Chain, VA, DL, Ins[InsIdx], *this);
     else {
       ArgValue = unpackFromMemLoc(DAG, Chain, VA, DL);
-      HasMemoryArgs = true;
     }
 
     if (VA.getLocInfo() == CCValAssign::Indirect) {
@@ -20031,7 +20035,7 @@ bool RISCVTargetLowering::isEligibleForTailCallOptimization(
     return false;
 
   // Do not tail call opt if the stack is used to pass parameters.
-  if (CCInfo.getStackSize() != 0)
+  if (CCInfo.getStackSize() != 0 && !Subtarget.hasStdExtZhm())
     return false;
 
   // Do not tail call opt if any parameters need to be passed indirectly.
@@ -20152,15 +20156,12 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
-  //if (Subtarget.hasStdExtZhm())
-  //  StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X17, PtrVT);
 
   SDValue ArgAlci;
   if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
     ArgAlci = SDValue(
       DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
       0);
-    //Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, ArgAlci);
     StackPtr = ArgAlci;
   }
 
@@ -20265,8 +20266,9 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), ArgValue));
     } else {
       assert(VA.isMemLoc() && "Argument not register or memory");
-      assert(!IsTailCall && "Tail call not allowed if stack is used "
-                            "for passing parameters");
+      if (!Subtarget.hasStdExtZhm())
+        assert(!IsTailCall && "Tail call not allowed if stack is used "
+                              "for passing parameters");
 
       // Work out the address of the stack slot.
       if (!StackPtr.getNode())
@@ -20314,6 +20316,8 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   bool CalleeIsLargeExternalSymbol = false;
   if (Subtarget.hasStdExtZhm()){
     if (auto *S = dyn_cast<GlobalAddressSDNode>(Callee))
+      Callee = getAddr(S, DAG);
+    else if (auto *S = dyn_cast<ExternalSymbolSDNode>(Callee))
       Callee = getAddr(S, DAG);
 
   } else if (getTargetMachine().getCodeModel() == CodeModel::Large) {
