@@ -128,7 +128,7 @@ ArrayRef<MCPhysReg> RISCV::getArgGPRs(const RISCVABI::ABI ABI) {
   // the ILP32E ABI.
   static const MCPhysReg ArgIGPRs[] = {RISCV::X10, RISCV::X11, RISCV::X12,
                                        RISCV::X13, RISCV::X14, RISCV::X15,
-                                       RISCV::X16};
+                                       RISCV::X16, RISCV::X17};
   // The GPRs used for passing arguments in the ILP32E/LP64E ABI.
   static const MCPhysReg ArgEGPRs[] = {RISCV::X10, RISCV::X11, RISCV::X12,
                                        RISCV::X13, RISCV::X14, RISCV::X15};
@@ -564,6 +564,11 @@ bool llvm::CC_RISCV(unsigned ValNo, MVT ValVT, MVT LocVT,
     }
   } else {
     Reg = State.AllocateReg(ArgGPRs);
+  }
+
+  // FIXME: If we need exactly 8 args, dont push 8th arg on arg-object
+  if (Subtarget.hasStdExtZhm() && Reg == RISCV::X17){
+    Reg = MCRegister();
   }
 
   int64_t StackOffset =

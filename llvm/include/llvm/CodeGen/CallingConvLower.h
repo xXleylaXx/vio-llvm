@@ -236,6 +236,12 @@ public:
     Locs.push_back(V);
   }
 
+  const CCValAssign popLoc() {
+    const CCValAssign &V = Locs.back();
+    Locs.pop_back();
+    return V;
+  }
+
   LLVMContext &getContext() const { return Context; }
   MachineFunction &getMachineFunction() const { return MF; }
   CallingConv::ID getCallingConv() const { return CallingConv; }
