@@ -162,6 +162,12 @@ public:
     return std::make_pair(SDValue(), SDValue());
   }
 
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForMalloc(SelectionDAG &DAG, const SDLoc &DL, SDValue Chain,
+                          SDValue Src) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
+
   virtual SDValue EmitTargetCodeForSetTag(SelectionDAG &DAG, const SDLoc &dl,
                                           SDValue Chain, SDValue Addr,
                                           SDValue Size,

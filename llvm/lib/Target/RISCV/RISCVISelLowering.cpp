@@ -20865,6 +20865,7 @@ const char *RISCVTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SF_VC_V_VVW_SE)
   NODE_NAME_CASE(SF_VC_V_FVW_SE)
   NODE_NAME_CASE(ALCI)
+  NODE_NAME_CASE(ALC)
   }
   // clang-format on
   return nullptr;

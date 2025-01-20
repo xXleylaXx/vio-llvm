@@ -428,6 +428,7 @@ public:
     case LibFunc_log2:         case LibFunc_log2f:      case LibFunc_log2l:
     case LibFunc_memcmp:       case LibFunc_bcmp:       case LibFunc_strcmp:
     case LibFunc_memcpy:       case LibFunc_memset:     case LibFunc_memmove:
+    case LibFunc_malloc:
     case LibFunc_nearbyint:    case LibFunc_nearbyintf: case LibFunc_nearbyintl:
     case LibFunc_rint:         case LibFunc_rintf:      case LibFunc_rintl:
     case LibFunc_round:        case LibFunc_roundf:     case LibFunc_roundl:

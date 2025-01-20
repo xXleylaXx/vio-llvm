@@ -500,7 +500,8 @@ enum NodeType : unsigned {
   TH_SDD,
   LAST_MEMORY_OPCODE = TH_SDD,
 
-  ALCI
+  ALCI,
+  ALC
 };
 // clang-format on
 } // namespace RISCVISD

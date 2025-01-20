@@ -9311,6 +9311,22 @@ bool SelectionDAGBuilder::visitStrNLenCall(const CallInst &I) {
   return false;
 }
 
+bool SelectionDAGBuilder::visitMallocCall(const CallInst &I) {
+  const Value *Arg0 = I.getArgOperand(0);
+
+  const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
+  std::pair<SDValue, SDValue> Res =
+    TSI.EmitTargetCodeForMalloc(DAG, getCurSDLoc(), DAG.getRoot(),
+                                 getValue(Arg0));
+  if (Res.first.getNode()) {
+    setValue(&I, Res.first);
+    DAG.setRoot(Res.second);
+    return true;
+  }
+
+  return false;
+}
+
 /// See if we can lower a unary floating-point operation into an SDNode with
 /// the specified Opcode.  If so, return true and lower it, otherwise return
 /// false and it will be lowered like a normal call.
@@ -9592,9 +9608,15 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         if (visitStrNLenCall(I))
           return;
         break;
+      case LibFunc_malloc:
+      //case LibFunc_calloc:
+        if (visitMallocCall(I))
+          return;
+        break;
       }
     }
   }
+  //assert(false && "Malloc nicht Gefunden! :(");
 
   if (I.countOperandBundlesOfType(LLVMContext::OB_ptrauth)) {
     LowerCallSiteWithPtrAuthBundle(cast<CallBase>(I), /*EHPadBB=*/nullptr);
