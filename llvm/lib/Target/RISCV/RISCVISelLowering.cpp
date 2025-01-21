@@ -49,6 +49,7 @@
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdint>
 #include <optional>
 
 using namespace llvm;
@@ -20157,10 +20158,16 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
 
-  SDValue ArgAlci;
-  if (NumBytes > 3 && Subtarget.hasStdExtZhm()) {
+  uint64_t ArgAlciSize = 0;
+  for (unsigned i = 0; i < ArgLocs.size(); ++i){
+    if (ArgLocs[i].isMemLoc())
+      ArgAlciSize += (Subtarget.getXLen()/8);
+  }
+
+  SDValue ArgAlci = SDValue();
+  if (ArgAlciSize != 0 && Subtarget.hasStdExtZhm()) {
     ArgAlci = SDValue(
-      DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(NumBytes, DL, MVT::i32)),
+      DAG.getMachineNode(RISCV::ALCI, DL, PtrVT, DAG.getTargetConstant(ArgAlciSize, DL, MVT::i32)),
       0);
     StackPtr = ArgAlci;
   }
@@ -20188,7 +20195,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
       if (HiVA.isMemLoc()) {
         // Second half of f64 is passed on the stack.
-        if (!StackPtr.getNode())
+        if (!StackPtr.getNode() && false)
           StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X2, PtrVT);
         SDValue Address =
             DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr,
@@ -20271,7 +20278,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
                               "for passing parameters");
 
       // Work out the address of the stack slot.
-      if (!StackPtr.getNode())
+      if (!StackPtr.getNode() && false)
         StackPtr = DAG.getCopyFromReg(Chain, DL, RISCV::X2, PtrVT);
       SDValue Address =
           DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr,
@@ -20280,15 +20287,15 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
       // Emit the store.
       MemOpChains.push_back(
           DAG.getStore(Chain, DL, ArgValue, Address,
-                       MachinePointerInfo::getStack(MF, VA.getLocMemOffset())));
+                       MachinePointerInfo((int) 0, VA.getLocMemOffset())));
     }
   }
+  SDValue Glue;
 
   // Join the stores, which are independent of one another.
-  if (!MemOpChains.empty())
+  if (!MemOpChains.empty()) {
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
-
-  SDValue Glue;
+  }
 
   // Build a sequence of copy-to-reg nodes, chained and glued together.
   for (auto &Reg : RegsToPass) {
@@ -20296,11 +20303,11 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Glue = Chain.getValue(1);
   }
 
-  if (ArgAlci) {
+  if (Subtarget.hasStdExtZhm() && ArgAlciSize != 0) {
     Chain = DAG.getCopyToReg(Chain, DL, RISCV::X17, ArgAlci, Glue);
     Glue = Chain.getValue(1);
   }
-
+  
   // Validate that none of the argument registers have been marked as
   // reserved, if so report an error. Do the same for the return address if this
   // is not a tailcall.

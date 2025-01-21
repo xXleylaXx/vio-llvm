@@ -45,6 +45,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/SwiftErrorValueTracking.h"
@@ -9298,6 +9299,7 @@ bool SelectionDAGBuilder::visitStrNLenCall(const CallInst &I) {
   const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
+  
   std::pair<SDValue, SDValue> Res =
     TSI.EmitTargetCodeForStrnlen(DAG, getCurSDLoc(), DAG.getRoot(),
                                  getValue(Arg0), getValue(Arg1),
@@ -9321,6 +9323,41 @@ bool SelectionDAGBuilder::visitMallocCall(const CallInst &I) {
   if (Res.first.getNode()) {
     setValue(&I, Res.first);
     DAG.setRoot(Res.second);
+    return true;
+  }
+
+  return false;
+}
+
+bool SelectionDAGBuilder::visitReallocCall(const CallInst &I) {
+  return false;
+}
+
+bool SelectionDAGBuilder::visitCallocCall(const CallInst &I) {
+  const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
+
+  const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
+  std::pair<SDValue, SDValue> Res =
+    TSI.EmitTargetCodeForCalloc(DAG, getCurSDLoc(), DAG.getRoot(),
+                                getValue(Arg0), getValue(Arg1));
+  if (Res.first.getNode()) {
+    setValue(&I, Res.first);
+    DAG.setRoot(Res.second);
+    return true;
+  }
+
+  return false;
+}
+
+bool SelectionDAGBuilder::visitFreeCall(const CallInst &I) {
+  const Value *Arg0 = I.getArgOperand(0);
+
+  const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
+  bool successful =
+    TSI.EmitTargetCodeForFree(DAG, getCurSDLoc(), DAG.getRoot(),
+                                 getValue(Arg0));
+  if (successful) {
+    setValue(&I, SDValue());
     return true;
   }
 
@@ -9609,8 +9646,19 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
         break;
       case LibFunc_malloc:
-      //case LibFunc_calloc:
         if (visitMallocCall(I))
+          return;
+        break;
+      case LibFunc_realloc:
+        if (visitReallocCall(I))
+          return;
+        break;
+      case LibFunc_calloc:
+        if (visitCallocCall(I))
+          return;
+        break;
+      case LibFunc_free:
+        if (visitFreeCall(I))
           return;
         break;
       }

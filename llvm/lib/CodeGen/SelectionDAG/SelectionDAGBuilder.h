@@ -611,6 +611,9 @@ private:
   bool visitStrLenCall(const CallInst &I);
   bool visitStrNLenCall(const CallInst &I);
   bool visitMallocCall(const CallInst &I);
+  bool visitReallocCall(const CallInst &I);
+  bool visitCallocCall(const CallInst &I);
+  bool visitFreeCall(const CallInst &I);
   bool visitUnaryFloatCall(const CallInst &I, unsigned Opcode);
   bool visitBinaryFloatCall(const CallInst &I, unsigned Opcode);
   void visitAtomicLoad(const LoadInst &I);
