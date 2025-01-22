@@ -80,3 +80,4 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE="MinSizeRel" -DLLVM_USE_SPLIT_DWARF=True -DCMA
 ../install/bin/clang-20 -S -target riscv32-unknown-elf -march=rv32i_zbb_zor -O1 -mcmodel=medany -Wno-incompatible-library-redeclaration -fno-addrsig -fomit-frame-pointer test.c
 
 ```
+test!
