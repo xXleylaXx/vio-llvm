@@ -1024,6 +1024,9 @@ private:
   SDValue lowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue lowerCallZhm(TargetLowering::CallLoweringInfo &CLI,
+                    SmallVectorImpl<SDValue> &InVals) const;
+
   bool isEligibleForTailCallOptimization(
       CCState &CCInfo, CallLoweringInfo &CLI, MachineFunction &MF,
       const SmallVector<CCValAssign, 16> &ArgLocs) const;
