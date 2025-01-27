@@ -84,12 +84,8 @@ def P29:	ObjectiveRISCReg<"p29",	29, ["ctxt"]>;
 def P30:	ObjectiveRISCReg<"p30",	30, ["frame"]>;
 def P31:	ObjectiveRISCReg<"p31",	31, ["rpc", "core"]>;
 
-// let Namespace = "ObjectiveRISC" in {
-// 	def ptr: PtrValueType<i32, 0>;
-// }
-
 class DataRegClass<dag regList>: RegisterClass<"ObjectiveRISC", [i32], 32, regList>;
-class PointerRegClass<dag regList>: RegisterClass<"ObjectiveRISC", [iPTR], 32, regList>;
+class PointerRegClass<dag regList>: RegisterClass<"ObjectiveRISC", [ptr], 32, regList>;
 
 def DR: DataRegClass<(sequence "D%u", 0, 31)>;
 def PR: PointerRegClass<(sequence "P%u", 0, 31)>;

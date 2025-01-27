@@ -8,7 +8,12 @@
 
 include "llvm/Target/Target.td"
 
+let Namespace = "ObjectiveRISC" in {
+	def ptr: PtrValueType<i32, 0>;
+}
+
 include "ObjectiveRISCRegisterInfo.td"
+include "ObjectiveRISCCallingConv.td"
 include "ObjectiveRISCInstrInfo.td"
 
 
