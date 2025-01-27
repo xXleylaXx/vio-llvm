@@ -70,7 +70,6 @@ def scimm3 : ObjRISCScaleImmLeafOp<3>;
 //======================================================================================
 class InstrFormat;
 
-def InstrFormatPseudo : InstrFormat;
 def FormatReg0 : InstrFormat;
 def FormatALU1 : InstrFormat;
 def FormatALU2 : InstrFormat;
@@ -95,12 +94,6 @@ class ObjRISCInstr<string opcodestr, dag outs, dag ins, string argstr, InstrForm
 	dag OutOperandList = outs;
 	dag InOperandList = ins;
 	let AsmString = opcodestr # !if(!empty(argstr), "", !if(!lt(!size(opcodestr), 4), "\t", "") # "\t" # argstr);
-}
-
-class Pseudo<dag outs, dag ins, string opcodestr = "", string argstr = "">
-		: ObjRISCInstr<opcodestr, outs, ins, argstr, InstrFormatPseudo> {
-	let isPseudo = 1;
-	let isCodeGenOnly = 1;
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
@@ -246,6 +239,7 @@ def SRL:		ObjRISCInstrRegALU<"srl", Commutable=0>;
 def SRA:		ObjRISCInstrRegALU<"sra", Commutable=0>;
 def SLL:		ObjRISCInstrRegALU<"sll", Commutable=0>;
 def ROL:		ObjRISCInstrRegALU<"rol", Commutable=0>;
+//def ROR			ObjRISCInstrRegALU<"ror", Commutable=0>;
 def SRLI:		ObjRISCInstrRegShiftImm<"srli">;
 def SRAI:		ObjRISCInstrRegShiftImm<"srai">;
 def SLLI:		ObjRISCInstrRegShiftImm<"slli">;
@@ -341,3 +335,64 @@ def	BLTS:		ObjRISCInstrBranchD<"blts">;
 // Other Instructions
 let hasSideEffects = 1, mayLoad = 1, mayStore = 1 in
 def	TRAP:		ObjRISCInstr<"trap", (outs), (ins uimm10:$ui10), "$ui10", FormatReg0>;
+
+// Pseudo Instructions
+def NOP: 		InstAlias<"nop",										(ADD D0, D0, D0)>;
+def CP: 		InstAlias<"cp\t\t$dx = $dy", 				(ADD DR:$dx, DR:$dy, D0)>;
+def LI: 		InstAlias<"li\t\t$dx = $ui12", 			(ADDI DR:$dx, D0, uimm12:$ui12)>;
+def LNI: 		InstAlias<"lni\t$dx = $ui12",				(SUB DR:$dx, D0, DR:$dy)>;
+def CLR: 		InstAlias<"clr\t$dx",								(ADD DR:$dx, D0, D0)>;
+def INC: 		InstAlias<"inc\t$dx",								(ADDI DR:$dx, DR:$dx, 1)>;
+def DEC: 		InstAlias<"dec\t$dx",								(SUBI DR:$dx, DR:$dx, 1)>;
+def EXTBU:	InstAlias<"extbu\t$dx = $dy",				(ANDI DR:$dx, DR:$dy, 255)>;
+def NEG: 		InstAlias<"neg\t$dx = $dy",					(SUB DR:$dx, D0, DR:$dy)>;
+def QDT: 		InstAlias<"qdt\t$dy = $px",					(QDTB DR:$dy, PR:$px)>;
+
+def SV_D:		InstAlias<"sv\t\t$dx, $ui12",				(SW_I P30, uimm12:$ui12, DR:$dx)>;
+def SV_P:		InstAlias<"sv\t\t$px, $ui12",				(SP_I P30, uimm12:$ui12, PR:$px)>;
+def RST_D:	InstAlias<"rst\t$dy, $ui12",				(LW_I DR:$dx, P30, uimm12:$ui12)>;
+def RST_P:	InstAlias<"rst\t$py, $ui12",				(LP_I PR:$px, P30, uimm12:$ui12)>;
+
+def MULHUS:	InstAlias<"mulhsu\t$dx = $dy, $dz", (MULHSU DR:$dx, DR:$dz, DR:$dy)>;
+def BGTS:		InstAlias<"bgts\t$dy, $dz, $sd12", 	(BLTS DR:$dz, DR:$dy, simm12:$sd12)>;
+def BLES:		InstAlias<"bles\t$dy, $dz, $sd12", 	(BGES DR:$dz, DR:$dy, simm12:$sd12)>;
+def BGTU:		InstAlias<"bgtu\t$dy, $dz, $sd12", 	(BLTU DR:$dz, DR:$dy, simm12:$sd12)>;
+def BLEU:		InstAlias<"bleu\t$dy, $dz, $sd12", 	(BGEU DR:$dz, DR:$dy, simm12:$sd12)>;
+
+def BEQP_1:	InstAlias<"beqp\t$px, $sd12",				(BEQP PR:$px, P0, simm12:$sd12)>;
+def BNEP_1:	InstAlias<"bnep\t$px, $sd12",				(BNEP PR:$px, P0, simm12:$sd12)>;
+def BEQ_1:	InstAlias<"beq\t$dx, $sd12",				(BEQ  PR:$dx, D0, simm12:$sd12)>;
+def BNE_1:	InstAlias<"bne\t$dx, $sd12",				(BNE  PR:$dx, D0, simm12:$sd12)>;
+def BLE_1:	InstAlias<"ble\t$dx, $sd12",				(BGES D0, PR:$dx, simm12:$sd12)>;
+def BGE_1:	InstAlias<"bge\t$dx, $sd12",				(BGES PR:$dx, D0, simm12:$sd12)>;
+def BLT_1:	InstAlias<"blt\t$dx, $sd12",				(BLTS D0, PR:$dx, simm12:$sd12)>;
+def BGT_1:	InstAlias<"bgt\t$dx, $sd12",				(BLTS PR:$dx, D0, simm12:$sd12)>;
+
+// TODO: multiclass benutzen?
+def	ADDI_1:	InstAlias<"addi\t$dx = $ui12",			(ADDI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	SUBI_1:	InstAlias<"subi\t$dx = $ui12",			(SUBI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	ANDI_1:	InstAlias<"andi\t$dx = $ui12",			(ANDI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	ANDNI_1:InstAlias<"andni\t$dx = $ui12",			(ANDNI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	ORI_1:	InstAlias<"ori\t$dx = $ui12",				(ORI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	XORI_1:	InstAlias<"xori\t$dx = $ui12",			(XORI DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	MULIU_1:InstAlias<"muliu\t$dx = $ui12",			(MULIU DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	MULIS_1:InstAlias<"mulis\t$dx = $ui12",			(MULIS DR:$dx, DR:$dx, uimm12:$ui12)>;
+def	SRLI_1:	InstAlias<"srli\t$dx = $ui5",				(SRLI DR:$dx, DR:$dx, uimm5:$ui5)>;
+def	SRAI_1:	InstAlias<"srai\t$dx = $ui5",				(SRAI DR:$dx, DR:$dx, uimm5:$ui5)>;
+def	SLLI_1:	InstAlias<"slli\t$dx = $ui5",				(SLLI DR:$dx, DR:$dx, uimm5:$ui5)>;
+
+def	ADD_1:	InstAlias<"addi\t$dx = $dz",				(ADDI DR:$dx, DR:$dx, DR:$dz)>;
+def	SUB_1:	InstAlias<"subi\t$dx = $dz",				(SUBI DR:$dx, DR:$dx, DR:$dz)>;
+def	AND_1:	InstAlias<"andi\t$dx = $dz",				(ANDI DR:$dx, DR:$dx, DR:$dz)>;
+def	ANDN_1:	InstAlias<"andni\t$dx = $dz",				(ANDNI DR:$dx, DR:$dx, DR:$dz)>;
+def	OR_1:		InstAlias<"ori\t$dx = $dz",					(ORI DR:$dx, DR:$dx, DR:$dz)>;
+def	XOR_1:	InstAlias<"xori\t$dx = $dz",				(XORI DR:$dx, DR:$dx, DR:$dz)>;
+def	MUL_1:	InstAlias<"muliu\t$dx = $dz",				(MULIU DR:$dx, DR:$dx, DR:$dz)>;
+def	SRL_1:	InstAlias<"srli\t$dx = $dz",				(SRLI DR:$dx, DR:$dx, DR:$dz)>;
+def	SRA_1:	InstAlias<"srai\t$dx = $dz",				(SRAI DR:$dx, DR:$dx, DR:$dz)>;
+def	SLL_1:	InstAlias<"slli\t$dx = $dz",				(SLLI DR:$dx, DR:$dx, DR:$dz)>;
+
+def SEQ	:		InstAlias<"seq\t$dx = $dy",					(SLTIU DR:$dx, DR:$dy, 1)>;
+def SNE	:		InstAlias<"sne\t$dx = $dy",					(SLTU DR:$dx, D0, DR:$dy)>;
+def SLT	:		InstAlias<"slt\t$dx = $dy",					(SLTS DR:$dx, DR:$dy, D0)>;
+def SGT	:		InstAlias<"sgt\t$dx = $dy",					(SLTS DR:$dx, D0, DR:$dy)>;
