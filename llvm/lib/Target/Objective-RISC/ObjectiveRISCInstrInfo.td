@@ -205,8 +205,6 @@ class ObjRISCInstrRegJ<string opcodestr>
 // Concrete Instructions
 //======================================================================================
 
-// TODO: Befehle hinzufügen
-// TODO: Pseudobefehle
 // TODO: Eigene Definition für SCP und LCP!? let Constraints = "$py = $py_out"
 // TODO: Attribute? isBranch, isCall, isReturn, isTerminator, Defs, Uses, hasSideEffects, mayLoad, mayStore, ...
 
@@ -239,7 +237,7 @@ def SRL:		ObjRISCInstrRegALU<"srl", Commutable=0>;
 def SRA:		ObjRISCInstrRegALU<"sra", Commutable=0>;
 def SLL:		ObjRISCInstrRegALU<"sll", Commutable=0>;
 def ROL:		ObjRISCInstrRegALU<"rol", Commutable=0>;
-//def ROR			ObjRISCInstrRegALU<"ror", Commutable=0>;
+//def ROR		ObjRISCInstrRegALU<"ror", Commutable=0>;
 def SRLI:		ObjRISCInstrRegShiftImm<"srli">;
 def SRAI:		ObjRISCInstrRegShiftImm<"srai">;
 def SLLI:		ObjRISCInstrRegShiftImm<"slli">;
@@ -275,13 +273,16 @@ def	ALC_PD:	ObjRISCInstr<"alc", (outs PR:$px), (ins uimm11:$pi11, uimm15:$delta1
 
 // Stack Instructions
 let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+let Defs = [P30] in {
 def	PUSH:		ObjRISCInstr<"push", (outs), (ins uimm11:$pi11, uimm15:$delta15), "$px = $pi11, $delta15", FormatPGU6>;
 def	PUSHT:	ObjRISCInstr<"pusht", (outs), (ins uimm11:$pi11, uimm15:$delta15), "$px = $pi11, $delta15", FormatPGU5>;
+}
+let Uses = [P30] in
 def	POP:		ObjRISCInstr<"pop", (outs), (ins), "", FormatReg0>;
 }
-let hasSideEffects = 1, mayLoad = 0, mayStore = 1 in
+let hasSideEffects = 1, mayLoad = 0, mayStore = 1, Uses = [P31] in
 def	SVRPC:	ObjRISCInstr<"sv", (outs), (ins), "rpc", FormatLSUB>;
-let hasSideEffects = 1, mayLoad = 1, mayStore = 0 in
+let hasSideEffects = 1, mayLoad = 1, mayStore = 0, Defs = [P31] in
 def	RSTRPC:	ObjRISCInstr<"rst", (outs), (ins), "rpc", FormatLSUB>;
 
 // Load/Store Instructions
@@ -310,18 +311,18 @@ def SW:			ObjRISCInstrStoreRegD<"sw">;
 def SP:			ObjRISCInstrStoreRegP<"sp">;
 
 // Branch and Jump Instructions
-let hasSideEffects = 0 in
+let hasSideEffects = 0 in {
 def JMP:		ObjRISCInstrRegJ<"jmp">;
-let hasSideEffects = 1 in
-def JSR:		ObjRISCInstrRegJ<"jsr">;
-let hasSideEffects = 0 in
 def BRA:		ObjRISCInstrBranch<"bra">;
-let hasSideEffects = 1 in
+let Defs = [P31] in {
 def BSR:		ObjRISCInstrBranch<"bsr">;
-let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
+def JSR:		ObjRISCInstrRegJ<"jsr">;
+let mayLoad = 0, mayStore = 0 in
 def JLIB:		ObjRISCInstr<"jlib", (outs), (ins PR:$px, uimm20:$ix20), "$px, $ix20", FormatBPUF>;
-let isReturn = 1, isTerminator = 1, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
+}
+let isReturn = 1, isTerminator = 1, mayLoad = 0, mayStore = 0, Uses = [P31] in
 def	RET:		ObjRISCInstr<"ret", (outs), (ins), "", FormatReg0>;
+}
 
 def	BEQP:		ObjRISCInstrBranchP<"beqp">;
 def	BNEP:		ObjRISCInstrBranchP<"bnep">;
@@ -396,3 +397,27 @@ def SEQ	:		InstAlias<"seq\t$dx = $dy",					(SLTIU DR:$dx, DR:$dy, 1)>;
 def SNE	:		InstAlias<"sne\t$dx = $dy",					(SLTU DR:$dx, D0, DR:$dy)>;
 def SLT	:		InstAlias<"slt\t$dx = $dy",					(SLTS DR:$dx, DR:$dy, D0)>;
 def SGT	:		InstAlias<"sgt\t$dx = $dy",					(SLTS DR:$dx, D0, DR:$dy)>;
+
+// DAG Nodes
+//======================================================================================
+
+// TODO
+
+// Instruction Selection Patterns
+//======================================================================================
+
+class PatDD<SDPatternOperator OpNode, ObjRISCInstr Inst>
+		: Pat<(i32 (OpNode (i32 DR:$dy), (i32 DR:$dz))), (Inst DR:$dy, DR:$dz)>;
+
+def : PatDD<add, ADD>;
+def : PatDD<sub, SUB>;
+def : PatDD<mul, MUL>;
+def : PatDD<sub, AND>;
+def : PatDD<sub, OR>;
+def : PatDD<sub, XOR>;
+def : PatDD<setult, SLTU>;
+def : PatDD<setlt, SLTS>;
+
+// TODO: Shifts, Immediate Versions, ANDN, different Multiplications
+// TODO: Load, Store, alc
+// TODO: Branch, Jump, etc.
