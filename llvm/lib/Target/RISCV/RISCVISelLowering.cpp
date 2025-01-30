@@ -7864,6 +7864,15 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
   SDLoc DL(N);
   EVT Ty = getPointerTy(DAG.getDataLayout());
 
+  if (Subtarget.hasStdExtZhm()){
+    SDValue GPReg = DAG.getRegister(RISCV::X3, Subtarget.getXLenVT());
+    SDValue Addr = getTargetNode(N, DL, Ty, DAG, RISCVII::MO_GOT_OFF);
+    SDValue Load =
+        SDValue(DAG.getMachineNode(Subtarget.is64Bit() ? RISCV::LD : RISCV::LW, DL, Ty, GPReg, Addr), 0);
+
+    return Load;
+  }
+
   // When HWASAN is used and tagging of global variables is enabled
   // they should be accessed via the GOT, since the tagged address of a global
   // is incompatible with existing code models. This also applies to non-pic
@@ -7888,15 +7897,6 @@ SDValue RISCVTargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG,
             MachineMemOperand::MOInvariant,
         LLT(Ty.getSimpleVT()), Align(Ty.getFixedSizeInBits() / 8));
     DAG.setNodeMemRefs(cast<MachineSDNode>(Load.getNode()), {MemOp});
-    return Load;
-  }
-
-  if (Subtarget.hasStdExtZhm()){
-    SDValue GPReg = DAG.getRegister(RISCV::X3, Subtarget.getXLenVT());
-    SDValue Addr = getTargetNode(N, DL, Ty, DAG, RISCVII::MO_GOT_OFF);
-    SDValue Load =
-        SDValue(DAG.getMachineNode(Subtarget.is64Bit() ? RISCV::LD : RISCV::LW, DL, Ty, GPReg, Addr), 0);
-
     return Load;
   }
 
