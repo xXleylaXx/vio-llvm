@@ -1158,6 +1158,7 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
   const auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
+  const RISCVSubtarget &Subtarget = MF.getSubtarget<RISCVSubtarget>();
 
   // Callee-saved registers should be referenced relative to the stack
   // pointer (positive offset), otherwise use the frame pointer (negative
@@ -1185,18 +1186,25 @@ RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
     MinCSFI = CSI[0].getFrameIdx();
     MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
   }
+    
+  if (Subtarget.hasStdExtZhm()){
+    FrameReg = SPReg;
+    Offset =  StackOffset::getFixed(MFI.getStackSize() - FirstSPAdjustAmount + MFI.getObjectOffset(FI));
+    if (FI >= MinCSFI && FI <= MaxCSFI)
+      Offset = StackOffset::getFixed(RVFI->getCalleeSavedStackSize()) - Offset;
+    else
+      Offset += StackOffset::getFixed(Subtarget.getXLen() / 8);
+    return Offset;
+  }
 
   if (FI >= MinCSFI && FI <= MaxCSFI) {
     FrameReg = SPReg;
-
-    if (MF.getSubtarget<RISCVSubtarget>().hasStdExtZhm())
-      Offset = -Offset;
-    else if (FirstSPAdjustAmount)
+    if (FirstSPAdjustAmount)
       Offset += StackOffset::getFixed(FirstSPAdjustAmount);
     else
       Offset += StackOffset::getFixed(getStackSizeWithRVVPadding(MF));
     return Offset;
-  }
+  } 
 
   if (RI->hasStackRealignment(MF) && !MFI.isFixedObjectIndex(FI)) {
     // If the stack was realigned, the frame pointer is set in order to allow
