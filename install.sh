@@ -5,8 +5,4 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE="MinSizeRel"  -DLLVM_USE_SPLIT_DWARF=True  -DC
 cmake --build .
 
 echo "moving components to swkit"
-cp -rf bin ../../vio-swkit/misc/bintools
-cp -rf include ../../vio-swkit/misc/bintools
-cp -rf lib ../../vio-swkit/misc/bintools
-cp -rf libexec ../../vio-swkit/misc/bintools
-cp -rf share ../../vio-swkit/misc/bintools
+cp -rf bin ../../vio-swkit/tools/bin -p
