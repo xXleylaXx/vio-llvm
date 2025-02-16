@@ -41,13 +41,13 @@ let Predicates = [HasStdExtZhm] in {
   def LW_X  : RVInstR<0b1110111, 0b000, OPC_SYSTEM, (outs GPR:$rd), (ins GPR:$rs1), "lw.x", "$rd, $rs1">{
     let rs2 = 0b00000;
   }
-  def SW_X  : RVInstR<0b1111011, 0b000, OPC_SYSTEM, (outs), (ins GPR:$rs1, GPR:$rs2), "sw.x", "$rs1, $rs2">{
+  def SW_X  : RVInstR<0b1111011, 0b000, OPC_SYSTEM, (outs), (ins GPR:$rs1, GPR:$rs2), "sw.x", "$rs2, $rs1">{
     let rd = 0b00000;
   }
   def LD_X  : RVInstR<0b1111101, 0b000, OPC_SYSTEM, (outs GPR:$rd), (ins GPR:$rs1), "ld.x", "$rd, $rs1">{
     let rs2 = 0b00000;
   }
-  def SD_X  : RVInstR<0b1111110, 0b000, OPC_SYSTEM, (outs), (ins GPR:$rs1, GPR:$rs2), "sd.x", "$rs1, $rs2">{
+  def SD_X  : RVInstR<0b1111110, 0b000, OPC_SYSTEM, (outs), (ins GPR:$rs1, GPR:$rs2), "sd.x", "$rs2, $rs1">{
     let rd = 0b00000;
   }
 
